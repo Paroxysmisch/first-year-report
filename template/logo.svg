@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 120" width="100" height="120">
+  <path d="M50 4 L94 19 V54 C94 88 74 108 50 117 C26 108 6 88 6 54 V19 Z"
+        fill="#1B2A4A" stroke="#C98A2B" stroke-width="3"/>
+  <circle cx="50" cy="48" r="25" fill="none" stroke="#C98A2B" stroke-width="2"/>
+  <text x="50" y="58" font-family="Georgia, 'Times New Roman', serif" font-size="28"
+        font-weight="bold" fill="#FFFFFF" text-anchor="middle">U</text>
+  <text x="50" y="98" font-family="Georgia, 'Times New Roman', serif" font-size="9"
+        fill="#F0DDB8" text-anchor="middle" letter-spacing="2">EST. 1900</text>
+</svg>
