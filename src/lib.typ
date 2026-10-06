@@ -44,15 +44,16 @@
   heading-font: "New Computer Modern",
   ..items,
 ) = {
+  v(2em, weak: true)
   for (i, item) in items.pos().enumerate() {
     grid(
       columns: (1.8em, 1fr),
       column-gutter: 10pt,
       align: (left + top, left + top),
-      text(size: 16pt, weight: "bold", fill: primary-color, font: heading-font)[#(i + 1)],
+      text(weight: "bold", fill: primary-color, font: heading-font)[#(i + 1)],
       item,
     )
-    v(10pt, weak: true)
+    v(2em, weak: true)
   }
 }
 

@@ -86,10 +86,10 @@ The remainder of the PhD extends this idea across the hardware/software stack. O
   *Integrating theorem proving into kernel optimization workflows.*
   #lorem(50)
 ][
-  *Agent integration into (co-)development of the software and hardware stack.*
+  *Agentic (co-)development of the software and hardware stack.*
   #lorem(50)
 ][
-  *AI-accelerated modelling for better design space exploration.*
+  *AI-accelerated modelling for design space exploration.*
   #lorem(50)
 ]
 
