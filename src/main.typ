@@ -13,16 +13,17 @@
 
 #show: report.with(
   title: "Investigating the Emergent Dynamics of Distributed Consensus Protocols Under Adversarial Network Partitions",
-  subtitle: "First Year Progress Report",
+  subtitle: "First Year Report",
   author: "Yash Shah",
   student-id: "123456789",
   department: "Department of Computer Science",
   institution: "University of Somewhere",
   degree: "Doctor of Philosophy",
   report-type: "First Year Report",
-  supervisor: "Prof. Alex Smith",
-  advisor: "Dr. Bailey Jones",
-  logo: "/res/logo.svg",
+  supervisor: "Timothy M. Jones",
+  advisor: "Robert Mullins",
+  logo: "/res/ucam-logo.png",
+  logo-width: 4cm,
   date: datetime(year: 2026, month: 9, day: 26),
   abstract: [
     This report summarizes progress made during the first year of a PhD
@@ -83,10 +84,13 @@ The remainder of the PhD extends this idea across the hardware/software stack. O
 
 #directions[
   *Integrating theorem proving into kernel optimization workflows.*
+  #lorem(50)
 ][
   *Agent integration into (co-)development of the software and hardware stack.*
+  #lorem(50)
 ][
   *AI-accelerated modelling for better design space exploration.*
+  #lorem(50)
 ]
 
 

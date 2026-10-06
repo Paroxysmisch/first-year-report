@@ -238,15 +238,13 @@
   v(1fr)
   grid(
     columns: (auto, 1fr),
-    column-gutter: 12pt,
+    column-gutter: 20pt,
     align: horizon,
     if logo != none { image(logo, width: logo-width) } else { [] },
-    text(size: 8.5pt, fill: muted)[
-      #institution#if department != none [, #department]
-      #linebreak()
-      Submitted in partial fulfillment of the requirements for the #report-type, towards the degree of #degree.
-      #linebreak()
-      #date.display("[month repr:long] [year]")
+    text(size: 10pt, fill: muted)[
+      // #institution#if department != none [, #department]
+      #report-type submitted in partial fulfilment of the requirements for the degree of #degree
+      (#date.display("[month repr:long] [year]"))
     ],
   )
 
