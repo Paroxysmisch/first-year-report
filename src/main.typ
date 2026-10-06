@@ -43,6 +43,23 @@
 - Brief bit on what the verification project I just worked on
 - Brief bit highlighting 2--3 future projects and general PhD direction
 
+The remarkable progress of modern artificial intelligence has been driven in large part by a simple observation: increasing model size, training data, and computation tends to produce predictable improvements in capability [C1,C2]. The consequence of empirical scaling laws is an ever-increasing demand for computation as models become larger and are trained and deployed at greater scale.
+
+Meeting this demand through conventional semiconductor improvements alone is becoming increasingly difficult. The gains historically provided by process technology have slowed [C3], while modern GPUs already exploit enormous amounts of parallelism. Increasing parallelism further can provide more aggregate computation, but at the cost of increasing power and infrastructure requirements. Power, cooling, and electricity are consequently becoming important constraints on AI deployment, particularly for inference, where energy is consumed continuously as models serve users [C4--C6]. The pressure is therefore not simply to provide more computation, but to provide more useful computation for a given amount of energy, driving increasing specialization of AI hardware.
+
+This specialization is particularly evident in machine learning, where matrix multiplication has become a central computational primitive and a primary target for hardware optimization [C7]. The rise of dedicated accelerators such as Google's TPU demonstrated the benefits of tailoring hardware to these workloads [C8], while general-purpose GPUs have followed the same trend. Across NVIDIA's Ampere, Hopper, Blackwell, and Rubin generations, increasingly specialized support has been introduced for low-precision computation, tensor operations, data movement, sparsity, and inter-GPU communication [C9--C12]. The broader trend is clear: AI performance increasingly depends on exploiting hardware mechanisms designed specifically for machine-learning workloads.
+
+This specialization also makes the software problem harder. Achieving high performance requires knowledge of the underlying hardware and compiler stack, including memory movement, synchronization, scheduling, and specialized arithmetic units like Tensor Cores. Producing a correct kernel is therefore only the beginning; the challenge is to map the computation so that the hardware's available performance is actually realized [C13,C14]. At the same time, the workload itself is changing rapidly. New model architectures such as Mixture-of-Experts introduce different computation, memory, and communication patterns [C15], while successive generations of accelerator and interconnect hardware expose new capabilities and programming constraints [C10,C12]. Software must consequently adapt simultaneously to changing models, accelerators, and communication infrastructure.
+
+The resulting complexity affects not only optimization but also correctness. Modern GPU programming increasingly relies on asynchronous execution, specialized memory movement, and synchronization mechanisms, creating more opportunities for subtle errors involving data races and ordering. Formal systems such as GPUVerify have demonstrated the value of automated reasoning about GPU correctness [C16], and recent work continues to show that these problems remain challenging in practice [C17]. Verification must therefore evolve alongside the increasingly sophisticated hardware and software stack.
+
+Recent advances in artificial intelligence, particularly in large language models, offer an opportunity to address this growing complexity. LLMs can generate and transform code, reason over technical artefacts, interact with external tools, and iteratively refine their outputs. This enables agentic systems that can participate in engineering workflows rather than performing isolated code-generation tasks. Early work has demonstrated this potential for GPU kernel optimization [C14], algorithmic discovery [C18], and even hardware design and verification [C19,C20]. More broadly, this suggests that AI systems may be able to assist across the stack, from low-level kernel development to compiler and hardware design.
+
+My work during the first year has focused on one part of this problem: verification of low-level GPU kernels. I have developed a hybrid correctness pipeline combining symbolic reasoning, automated execution, and solver-backed analysis to identify functional and synchronization errors in GPU programs. The project explores how automated reasoning can complement LLM-based programming by providing precise feedback about the behaviour of generated or transformed kernels.
+
+The remainder of the PhD extends this idea across the hardware/software stack. One direction is to integrate theorem proving directly into kernel optimization workflows, using formal guarantees not only to detect errors but to enable more aggressive automated optimization. A second investigates how agents can participate in the co-development of the software and hardware stack, including their ability to understand and reason about compiler intermediate representations; recent work suggests that precise reasoning about IR semantics remains a significant limitation of current LLMs [C21]. A third explores AI-accelerated modelling for hardware design-space exploration, where the scale of modern architectural design spaces makes intelligent search increasingly attractive [C22,C23]. Together, these directions ask how increasingly capable AI systems can help us design, optimize, and verify the increasingly specialized computing systems required by AI itself.
+
+
 = Background <background>
 
 Classical results on distributed time and ordering @lamport1978time underpin
@@ -94,6 +111,16 @@ strong theoretical guarantees is of limited use if operators cannot
 observe, reason about, and recover from a partition while it is happening.
 Very little of the literature addresses the operational tooling needed to
 make partition tolerance legible to the humans running these systems.
+
+= Thesis proposal
+== Thesis chapters
+=== Integrating theorem proving into kernel optimization workflows
+
+=== Agent integration into (co-)development of the software and hardware stack
+- Can do some work on LLMs' understanding of Intermediate Representations
+  - Inspired from #link("https://raw.githubusercontent.com/mlresearch/v267/main/assets/jiang25p/jiang25p.pdf")[this paper]
+
+=== AI-accelerated modelling for better design space exploration
 
 = Methodology <methodology>
 
