@@ -1,5 +1,15 @@
-#import "/lib.typ": report, callout
+#import "/lib.typ": report, callout, directions
 #import "@preview/abbr:0.3.1"
+
+#abbr.make(
+  ("AI", "Artificial Intelligence"),
+  ("GPU", "Graphics Processing Unit"),
+  ("TPU", "Tensor Processing Unit"),
+  ("ML", "Machine Learning"),
+  ("MoE", "Mixture of Experts"),
+  ("LLM", "Large Language Model"),
+  ("IR", "Intermediate Representation"),
+)
 
 #show: report.with(
   title: "Investigating the Emergent Dynamics of Distributed Consensus Protocols Under Adversarial Network Partitions",
@@ -21,21 +31,17 @@
     work, describe preliminary experiments, and outline a plan for the
     remaining years of the project.
   ],
+  abbreviations: {
+    // `abbr.list()` emits its own heading for a title; push it off to an
+    // unused level and out of the outline so it doesn't consume a chapter
+    // number or show up in the table of contents / running header.
+    set heading(level: 6, outlined: false, numbering: none)
+    abbr.list(title: [])
+  },
   bibliography-file: "/refs.bib",
 )
 
 #show: abbr.show-rule
-#abbr.make(
-  ("AI", "Artificial Intelligence"),
-  ("GPU", "Graphics Processing Unit"),
-  ("TPU", "Tensor Processing Unit"),
-  ("ML", "Machine Learning"),
-  ("MoE", "Mixture of Experts"),
-  ("LLM", "Large Language Model"),
-  ("IR", "Intermediate Representation"),
-)
-
-#abbr.list()
 
 = Introduction
 // - Scaling laws mean that larger LLMs are "smarter" and gives a nice, predictable method of improving models
@@ -74,6 +80,14 @@ Recent advances in artificial intelligence, particularly in large language model
 My work during the first year has explored how @LLM agents can be equipped to optimize and verify @GPU kernels. In Glueball, I developed an agentic optimization workflow for Gluon kernels that combines hardware profiling and benchmarking with formal reasoning, allowing theorem-proving tools to provide correctness feedback during optimization and help improve @LLM:pla' formal reasoning capabilities. The resulting hybrid approach combines symbolic execution, @LLM reasoning, and a high-level @GPU semantics model in Z3 to check both functional equivalence and program properties such as asynchronous race freedom and barrier ordering, with counterexamples used to diagnose failures and guide subsequent revisions.
 
 The remainder of the PhD extends this idea across the hardware/software stack. One direction is to integrate theorem proving directly into kernel optimization workflows, using formal guarantees not only to detect errors but to enable more aggressive automated optimization. A second investigates how agents can participate in the co-development of the software and hardware stack, including their ability to understand and reason about compiler intermediate representations; recent work suggests that precise reasoning about @IR semantics remains a significant limitation of current @LLM:pla [C21]. A third explores @AI\-accelerated modelling for hardware design-space exploration, where the scale of modern architectural design spaces makes intelligent search increasingly attractive [C22,C23]. Together, these directions ask how increasingly capable @AI systems can help us design, optimize, and verify the increasingly specialized computing systems required by @AI itself.
+
+#directions[
+  *Integrating theorem proving into kernel optimization workflows.*
+][
+  *Agent integration into (co-)development of the software and hardware stack.*
+][
+  *AI-accelerated modelling for better design space exploration.*
+]
 
 
 = Background <background>

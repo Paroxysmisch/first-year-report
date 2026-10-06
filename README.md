@@ -12,32 +12,34 @@ away at the bottom — no centered blocks, no boring bordered info table.
 
 ```
 typst.toml       package + template manifest
-lib.typ          the template implementation (import target)
-template/
+src/
+  lib.typ        the template implementation (import target)
   main.typ       demo report — compile this to see the template in action
   refs.bib       dummy bibliography entries used by the demo
-  logo.svg       placeholder "university crest" used on the demo cover page
+  res/
+    logo.svg     placeholder "university crest" used on the demo cover page
 ```
 
 This follows Typst's own conventions for authoring a template package: a
 `typst.toml` manifest with a `[template]` table, an absolute-path entrypoint
-(`lib.typ`) at the package root, and a self-contained `template/` folder that
-is what gets copied when someone scaffolds a new project from this package.
+(`src/lib.typ`) relative to the package root, and a self-contained `src/`
+folder that is what gets copied when someone scaffolds a new project from
+this package.
 
 ## Try it now (no install needed)
 
 From the repo root:
 
 ```sh
-typst compile --root . template/main.typ template/main.pdf
+typst compile src/main.typ src/main.pdf
 ```
 
-`--root .` matters: it makes `lib.typ`'s absolute imports (`/lib.typ`, and
-paths like `/template/logo.svg`) resolve the same way they will once this is
-installed as a real package, so what you see now is exactly what you'll get
-later.
+No `--root` flag needed: `src/main.typ`'s absolute imports (`/lib.typ`, and
+paths like `/res/logo.svg`) are written assuming `src/` itself is the root,
+which is exactly what Typst defaults to (the entry file's own directory) —
+and matches how it resolves once this is installed as a real package too.
 
-Open `template/main.pdf` to view the result.
+Open `src/main.pdf` to view the result.
 
 ## Use it in other projects
 
@@ -65,7 +67,7 @@ or import it directly into an existing `.typ` file:
   author: "Your Name",
   supervisor: "Prof. Someone",
   advisor: "Dr. Someone Else",
-  logo: "logo.svg",
+  logo: "res/logo.svg",
 )
 
 = Introduction
@@ -89,7 +91,7 @@ call-time, nothing is hard-coded elsewhere in `lib.typ`:
 | `report-type` | `"First Year Report"` | |
 | `supervisor` | `none` | Skipped if `none`. |
 | `advisor` | `none` | Skipped if `none`. |
-| `logo` | `none` | Path to an image (svg/png/pdf); shown small, next to the institution line tucked at the bottom of the cover. Use an absolute path (e.g. `"/template/logo.svg"`) if it doesn't sit next to your entry file. |
+| `logo` | `none` | Path to an image (svg/png/pdf); shown small, next to the institution line tucked at the bottom of the cover. Use an absolute path (e.g. `"/res/logo.svg"`) if it doesn't sit next to your entry file. |
 | `logo-width` | `1.6cm` | |
 | `date` | `datetime.today()` | |
 | `abstract` | `none` | Content; adds an Abstract page if given. |
@@ -120,5 +122,11 @@ A `#callout(title: "Note", color: accent-color)[...]` helper is also
 exported for tinted, left-bordered admonition boxes — handy for flagging
 open questions or discussion points for your supervisor meetings.
 
-`template/logo.svg` is just a placeholder crest — replace it with your own
+A `#directions[...][...][...]` helper is exported too — a compact numbered
+list styled like the table of contents' big bold numerals, just smaller,
+for outlining a short list of directions, options, or steps inline in the
+body text (e.g. the research directions you plan to pursue). Each
+bracketed argument is one item's content.
+
+`src/res/logo.svg` is just a placeholder crest — replace it with your own
 university's logo file and update the `logo:` path.

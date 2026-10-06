@@ -34,6 +34,28 @@
   )
 }
 
+/// A compact numbered list, styled like the big bold numerals in the table
+/// of contents but a good deal smaller — handy for outlining a short list
+/// of research directions, options, or steps inline in the body text.
+/// Each positional argument is one item's content, e.g.
+/// `#directions[*Direction one.* ...][*Direction two.* ...]`.
+#let directions(
+  primary-color: rgb("#1B2A4A"),
+  heading-font: "New Computer Modern",
+  ..items,
+) = {
+  for (i, item) in items.pos().enumerate() {
+    grid(
+      columns: (1.8em, 1fr),
+      column-gutter: 10pt,
+      align: (left + top, left + top),
+      text(size: 16pt, weight: "bold", fill: primary-color, font: heading-font)[#(i + 1)],
+      item,
+    )
+    v(10pt, weak: true)
+  }
+}
+
 /// The main template function. Wrap your document body with
 /// `#show: report.with(...)`.
 #let report(
@@ -52,6 +74,8 @@
   logo-width: 1.6cm,
   date: datetime.today(),
   abstract: none,
+  abbreviations: none,
+  abbreviations-title: "List of Abbreviations",
   bibliography-file: none,
   bibliography-style: "ieee",
   // --- look and feel (override any of these at use-time) ---
@@ -237,6 +261,27 @@
       #text(size: 25pt, weight: "regular", style: "italic", fill: ink, font: heading-font)[Abstract]
       #v(22pt)
       #text(size: 10.5pt)[#abstract]
+    ]
+    v(1.3fr)
+  }
+
+  // ---------------------------------------------------------------------
+  // List of abbreviations — same treatment as the abstract page (vertically
+  // centered, narrow margins, italic title), just with different content.
+  // Pass e.g. `abbreviations: abbr.list()` from the `@preview/abbr` package.
+  // ---------------------------------------------------------------------
+  if abbreviations != none {
+    pagebreak()
+    v(1fr)
+    pad(x: 1.4cm)[
+      #text(size: 25pt, weight: "regular", style: "italic", fill: ink, font: heading-font)[#abbreviations-title]
+      #v(22pt)
+      // Some glossary packages (e.g. `abbr.list()`) emit their own
+      // level-1 heading for a title — neutralize it here so it doesn't
+      // duplicate the one above or trigger our chapter-opening treatment
+      // (pagebreak, numbering) while nested inside this container.
+      #show heading.where(level: 1): it => it.body
+      #text(size: 10.5pt)[#abbreviations]
     ]
     v(1.3fr)
   }

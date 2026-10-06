@@ -1,11 +1,11 @@
 [package]
 name = "first-year-report"
 version = "0.1.0"
-entrypoint = "lib.typ"
+entrypoint = "src/lib.typ"
 authors = ["Yash Shah"]
 license = "MIT"
 description = "A clean, professional Typst template for PhD first-year/annual reports with a serif typeface and customizable navy/amber accents."
 
 [template]
-path = "template"
+path = "src"
 entrypoint = "main.typ"
