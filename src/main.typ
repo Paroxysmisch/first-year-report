@@ -9,6 +9,9 @@
   ("MoE", "Mixture of Experts"),
   ("LLM", "Large Language Model"),
   ("IR", "Intermediate Representation"),
+  ("TMA", "Tensor Memory Accelerator"),
+  ("SSM", "State Space Model"),
+  ("MIMO", "Multi-Input Multi-Output"),
 )
 
 #show: report.with(
@@ -93,8 +96,41 @@ The remainder of the PhD extends this idea across the hardware/software stack. O
   #lorem(50)
 ]
 
+= Literature Review <sec:literature_review>
+- New developments to computer architecture
+  - Discuss in detail improvements made to GPUs and future directions
+  - New floating-point formats
+  - Dedicated hardware for matrix multiplication
+  - Asynchronous execution
+  - Developments to interconnect e.g. NVLink and TPU donuts, and their hardware/software impact
+  - TPUs, and special inference architecture
+- New model architecture developments e.g. developments to MoE, Mamba, Flash Attention and how they aim to maximize the most out of the current hardware
+- Key point is that we are really centering both software and hardware developments around the matrix multiplication primitive
+- Introduce the problem of kernel generation itself---why is it difficult
+- Introduce the verification problem
+- What work has been done around LLMs understanding/working with the compiler stack
+  - LLMs have shown to directly generate assembly
+  - Some work on LLMs understanding intermediate representations
+- What work has been done around LLMs for hardware design
+  - Possibly also try to find some co-design work
+- Use of AI in creating (surrogate) models e.g. for faster DSE, or combating limited data
 
-= Background <background>
+== Model Architecture and Hardware Co-Evolution
+
+=== Model Architectures adapting to Current Hardware
+
+Recent model architectures increasingly adapt their computation to the capabilities of contemporary accelerators. FlashAttention provides a particularly clear example. FlashAttention-3 was designed around Hopper's asynchronous Tensor Cores, @TMA, warp specialization, and FP8 support, restructuring the attention pipeline so that data movement and matrix computation can proceed concurrently [C1]. FlashAttention-4 then redesigns the kernels for Blackwell, whose Tensor Core throughput has increased substantially faster than resources such as the hardware used to evaluate exponentials. This changes the attention bottleneck: the kernel must focus on reducing the cost of the softmax operation so that less of its work sits on the critical path. Additionally, the exponential evaluation is overlapped with matrix multiplication, and shared-memory traffic reduced [C2]. Thus, the same attention algorithm requires a different implementation as the relative capabilities of the underlying hardware change.
+
+State-space models show a similar progression. Mamba-2 reformulated the @SSM computation to expose more matrix-multiplication-friendly structure and thereby make better use of modern @GPU compute units [C3]. Mamba-3 addresses a different hardware limitation during autoregressive decoding: the recurrent state update is relatively inexpensive in terms of arithmetic but requires repeatedly reading and updating state, leaving a GPU with substantial unused compute capacity [C4]. Its @MIMO formulation allows several input streams to share the same recurrent state, replacing the rank-1 outer-product update with a hardware-friendly matrix multiplication. This increases the amount of arithmetic performed per unit of state traffic, raising hardware utilization without increasing the size of the persistent state or the decode latency substantially [C4]. The model's mathematical formulation is changed for a computational structure more suited to the accelerator.
+
+=== Model Architectures driving Future Hardware Requirements
+The relationship between model and accelerator architecture is increasingly bidirectional. New models are beginning to explore execution patterns that are poorly represented by today's dominant accelerator designs, particularly the assumption of regular, dense tensor operations with largely static dataflow. @MoE models make computation and communication input-dependent: only a small subset of experts is activated for each token, but the resulting token routing can produce irregular memory accesses and substantial inter-device communication [C7].
+
+Other directions include recursive and looped Transformers, which make computation depth itself variable, with Mixture-of-Recursions allowing different tokens to undergo different numbers of recursive steps while selectively retaining their state [C11]. Long-context architectures such as Kimi Linear combine recurrent-style state updates with periodic full attention, creating heterogeneous execution within a single layer stack [C12].
+
+Regarding numerical representation, recent work on fully quantized training is moving beyond using low precision merely as a deployment optimization: FP4 is increasingly being incorporated directly into training, while Blackwell provides native support for NVFP4 computation [C13,C14]. The latest Nemotron models combine hybrid Mamba-Attention layers, sparse @MoE, multi-token prediction, and NVFP4 training, illustrating how model architecture, numerical representation, and accelerator capabilities can be designed jointly [C15]. Taken together, these developments point towards increasingly heterogeneous workload characteristics, which future accelerators may need to cater for.
+
+= Background <sec:background>
 
 Classical results on distributed time and ordering @lamport1978time underpin
 much of modern consensus theory. More recent machine-learning approaches to
@@ -156,7 +192,7 @@ make partition tolerance legible to the humans running these systems.
 
 === AI-accelerated modelling for better design space exploration
 
-= Methodology <methodology>
+= Methodology <sec:methodology>
 
 Our approach combines a formally specified protocol variant with a
 fault-injection test harness.

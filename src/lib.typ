@@ -141,8 +141,8 @@
     )
   ]
 
-  show heading.where(level: 3): it => block(above: 1.1em, below: 0.6em)[
-    #text(size: 13.5pt, weight: "bold", style: "italic", fill: ink, font: heading-font)[#it.body]
+  show heading.where(level: 3): it => block(above: 1.4em, below: 0.9em)[
+    #text(size: 1em, weight: "regular", style: "italic", fill: primary-color, font: heading-font)[#it.body]
   ]
 
   // ---------------------------------------------------------------------
