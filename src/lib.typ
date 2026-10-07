@@ -309,7 +309,7 @@
         link(h.location(), grid(
           columns: (2.4em, 1fr, auto),
           column-gutter: 14pt,
-          align: (left + bottom, left + bottom, right + bottom),
+          align: (left + horizon, left + horizon, right + horizon),
           if h.numbering != none {
             text(size: 22pt, weight: "bold", fill: primary-color, font: heading-font)[
               #numbering(h.numbering, ..counter(heading).at(h.location()))
