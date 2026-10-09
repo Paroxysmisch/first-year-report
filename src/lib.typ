@@ -78,7 +78,7 @@
   abbreviations: none,
   abbreviations-title: "List of Abbreviations",
   bibliography-file: none,
-  bibliography-style: "ieee",
+  bibliography-style: "apa",
   // --- look and feel (override any of these at use-time) ---
   primary-color: rgb("#1B2A4A"),
   accent-color: rgb("#C98A2B"),
