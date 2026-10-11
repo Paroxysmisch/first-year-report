@@ -21,6 +21,10 @@
   ("FPGA", "Field-Programmable Gate Array"),
   ("ASIC", "Application-Specific Integrated Circuit"),
   ("SoC", "System on a Chip"),
+  ("DSE", "Design-Space Exploration"),
+  ("PPA", "Power, Performance, and Area"),
+  ("MAPE", "Mean Absolute Percentage Error"),
+  ("BO", "Bayesian Optimisation"),
 )
 
 #show: report.with(
@@ -36,7 +40,7 @@
   advisor: "Robert Mullins",
   logo: "/res/ucam-logo.png",
   logo-width: 4cm,
-  date: datetime(year: 2026, month: 9, day: 26),
+  date: datetime(year: 2026, month: 10, day: 30),
   abstract: [
     This report summarizes progress made during the first year of a PhD
     investigating how distributed consensus protocols behave under
@@ -173,6 +177,18 @@ More ambitious work attempts to generate hardware around a particular algorithm.
 Hardware and software decisions are interdependent: a specialised hardware feature is valuable only if software can exploit it, while algorithmic demands determine which architectural capabilities are worth building. Optimising either side independently can therefore miss the best designs, and recent work has begun to address the joint problem. MACO @maco uses multiple agents to generate and iteratively refine coarse-grained reconfigurable array architectures together with their software mapping. HSCO-Bench @hsco-bench evaluates a broader end-to-end workflow: analysing an application, integrating accelerators into a @SoC, and mapping software kernels onto them, with prototypes deployed on an @FPGA. Only two of five frontier models produced valid prototypes. Even these left most of the available hardware resources unused, despite a peak speedup of 16.22×, which suggests that agents stop at the first working design rather than exploring the trade-off space.
 
 Co-design thus compounds the difficulties seen in each domain: a larger search space, more complex toolchains, and expanded failure modes. Current results demonstrate early progress, but not general autonomous co-design across arbitrary workloads and platforms. Across all three areas, @LLM:pla are most dependable when proposing candidates that established tools can check, and least dependable when they must guarantee correctness and construct novel software and hardware mechanisms themselves.
+
+== AI-Based Performance Modelling for Hardware-Software Co-Design
+
+Exploring accelerator designs requires evaluating many combinations of hardware parameters, workloads, and compiler mappings. However, detailed performance evaluation through execution, simulation, or synthesis can be expensive, limiting the number of configurations that can be explored. @AI\-based performance models address this problem by learning to predict execution time, resource utilisation, or hardware implementation costs, allowing @DSE to focus expensive evaluations on promising candidates. Recent work has increasingly targeted not only prediction accuracy, but also the ability to transfer knowledge across hardware platforms and learn from fewer measurements.
+
+In compiler optimisation, learned cost models estimate the performance of candidate schedules, reducing the need to execute every program generated during autotuning. Recent models increasingly represent the structure of compiler decisions explicitly. SA-Cost @SACost uses attention to model relationships between scheduling primitives, rather than treating a tensor program as an undifferentiated feature vector. However, its evaluation focuses on tensor-program tuning, leaving its generalisation to substantially different hardware and low-level @GPU execution behaviour to be established. UniCoX @UniCoX extends this direction by aligning schedule and hardware features to support cost prediction across heterogeneous accelerators. Its authors report an 11.3× reduction in search time within the evaluated MetaSchedule framework, although transfer to previously unseen architectures remains an important question. TCL @TCL addresses the expense of collecting training data more directly: it combines active selection of representative, diverse, and uncertain samples with a Mamba-based cost model and continual knowledge distillation across platforms. It reports using only 10% of the programs for data collection and substantially faster tuning than a TenSet-MLP baseline. Together, these approaches illustrate a shift towards models that encode compiler structure and reuse information across targets; nevertheless, their reported results do not establish that the models will accurately predict the effects of architecture-specific instructions, synchronisation, and memory pipelines on an unfamiliar @GPU.
+
+Learned models are also being applied to hardware implementation costs. Conventional approaches can estimate @PPA from structured representations of @RTL designs, but may require representative training examples from the design family of interest. LLMulator @LLMulator explores a different approach by using a pretrained @LLM as a numerical cost model for dataflow accelerators. It predicts implementation metrics and execution cycles, using input-adaptive calibration and data augmentation to improve generalisability across workloads and hardware configurations. The authors report a @MAPE of 12.2% across their evaluated @ASIC scenarios. This demonstrates that @LLM:pla can be used as performance predictors rather than solely as code generators. However, the results concern a particular class of dataflow accelerators and should not be taken as evidence that an @LLM can predict performance reliably for arbitrary @GPU architectures.
+
+A related challenge is making the search itself data-efficient. Multi-fidelity methods combine inexpensive approximate evaluations with a smaller number of costly measurements, such as @RTL simulation. Polaris @Polaris provides an example: its learned Starlight model transfers information from analytical estimates to higher-fidelity simulation results, and its search procedure uses the model to explore hardware-software configurations more quickly. More recent work integrates @LLM:pla into this optimisation loop. Trust-aware @LLM\-assisted Bayesian optimisation @TrustAwareBO combines @LLM guidance with a statistical surrogate and a trust-control mechanism, using the @LLM to inform the search while retaining measured evaluations to guide candidate selection. Its evaluation covers a configurable digital baseband generator and a systolic-array neural processing unit; whether this combination generalises to broader accelerator families remains open.
+
+Recent @GPU\-specific work also connects performance prediction directly to kernel optimisation. Mapo @Mapo combines a model of @GPU memory-access behaviour with an @LLM\-based optimisation loop, using predicted performance metrics as feedback to guide memory-oriented code transformations. This illustrates how learned models can provide quantitative feedback that is cheaper than repeatedly profiling each generated candidate. More broadly, these approaches suggest an opportunity to model the interaction between a kernel, its compiler mapping, and the target hardware rather than modelling the software or hardware in isolation. For custom @GPU design, such a model could combine inexpensive analytical or emulated evaluations with selectively collected simulation results, while using active learning to decide which candidates merit expensive evaluation. Success should therefore be measured not only by prediction error, but also by the quality of the designs found under a fixed evaluation budget and by generalisation to unseen workloads and hardware configurations.
 
 = Background <sec:background>
 
