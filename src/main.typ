@@ -17,6 +17,10 @@
   ("HBM4", "High Bandwidth Memory 4"),
   ("MMA", "Matrix Multiply-Accumulate"),
   ("PTX", "Parallel Thread Execution"),
+  ("RTL", "Register-Transfer Level"),
+  ("FPGA", "Field-Programmable Gate Array"),
+  ("ASIC", "Application-Specific Integrated Circuit"),
+  ("SoC", "System on a Chip"),
 )
 
 #show: report.with(
@@ -159,25 +163,13 @@ These results motivate more systematic evaluations of models that directly manip
 
 === LLMs for Hardware Design and Exploration
 
-@LLM:pla have also been applied to hardware design, particularly where candidate architectures can be evaluated through synthesis, simulation, or execution. Rather than generating arbitrary RTL, many systems explore a structured design space encompassing parallelism, dataflow, and memory organisation. *@LLM\-DSE* @wang2025llmdse, for example, uses collaborating agents to optimise high-level synthesis directives, while *SECDA-DSE* @sharma2026secda integrates @LLM\-guided exploration with FPGA synthesis and execution. These approaches demonstrate how empirical feedback can help agents navigate hardware trade-offs, although their search is largely constrained by an existing design framework.
+@LLM:pla have also been applied to hardware design. Rather than simply focussing on @RTL generation, many systems explore a structured design space encompassing parallelism, dataflow, and memory organisation. @LLM\-DSE @llm-dse, for example, uses collaborating agents to optimise high-level synthesis directives, while SECDA-DSE @secda integrates @LLM\-guided exploration with @FPGA synthesis and execution.
 
-More ambitious work attempts to generate hardware around a particular algorithm. *Design Conductor 2.0* @verkor2026designconductor describes VerTQ, an inference accelerator designed specifically for the TurboQuant vector-quantisation algorithm. The authors report mapping the generated design to an FPGA and estimating its area in a target ASIC process. As a preprint, this result should be treated as an emerging demonstration rather than established evidence of competitive autonomous hardware design. Nevertheless, it illustrates a shift from optimising within a predefined architecture to generating specialised hardware that reflects an algorithm's computational requirements.
+More ambitious work attempts to generate hardware around a particular algorithm. Design Conductor 2.0 @design-conductor-2 describes VerTQ, an inference accelerator designed specifically for the TurboQuant vector-quantisation algorithm. The authors report mapping the generated design to an @FPGA and estimating its area in a target @ASIC process. It illustrates a shift from optimising within a predefined architecture to generating specialised hardware that reflects an algorithm's computational requirements.
 
 === Early Work on Hardware–Software Co-Design
 
-Hardware and software decisions are interdependent: a specialised hardware feature is valuable only if software can use it efficiently, while compiler abstractions influence which architectural capabilities are useful. Recent work has begun to investigate this joint problem. *MACO* @jiang2026maco uses multiple agents to generate and iteratively refine coarse-grained reconfigurable array architectures alongside their software configuration. *HSCO-Bench* @tsai2026hscobench evaluates a broader end-to-end workflow involving application analysis, accelerator integration into a system-on-chip, and software mapping. In its evaluation, only two of five frontier models successfully generated valid SoC prototypes, and the resulting designs remained far from optimal. These results demonstrate early progress, but not yet general autonomous co-design across arbitrary workloads and hardware platforms.
-
-=== Limitations and Research Opportunities
-
-*Correctness and semantic reasoning.* IR comprehension remains imperfect, and generated transformations may be incorrect or fail to preserve program behaviour. CIRBench and PeepholeBench show that correctness and optimisation quality must be assessed separately, while direct PTX generation requires explicit modelling of architecture-specific operations and synchronisation. A key opportunity is to integrate formal verification and semantic checking directly into the agent loop, allowing verified feedback to guide subsequent proposals rather than merely reject incorrect outputs.
-
-*Evaluation cost.* Compiler modification and hardware exploration require repeated compilation, benchmarking, synthesis, or simulation. Magellan uses measured application performance to guide heuristic evolution, while SECDA-DSE evaluates candidates through an FPGA implementation flow. Although such feedback grounds search in real outcomes, it can become expensive as the search space grows. Hierarchical evaluation—using static checks and fast models to filter candidates before expensive execution—could make these workflows more scalable.
-
-*Restricted search spaces.* Most systems either modify an existing compiler component or explore hardware configurations permitted by a predefined framework. Work such as Design Conductor 2.0 moves towards algorithm-specific hardware generation, but does not establish that agents can consistently identify useful new abstractions across workload families. An important research direction is to evaluate whether agents can introduce genuinely useful compiler operations, lowering passes, or hardware primitives, rather than merely tune existing options.
-
-*End-to-end integration.* Generating an isolated compiler pass or accelerator does not ensure that the complete system is correct or performant. HSCO-Bench highlights the difficulty of integrating hardware, software, and resource constraints into a working SoC. Future systems should therefore evaluate generated components as part of an executable stack, measuring correctness, performance, and resource use against established baselines.
-
-Overall, the literature suggests that @LLM:pla are most effective when given a constrained development environment and reliable feedback from established tools. The longer-term opportunity is to extend these capabilities from improving individual components towards developing useful abstractions and implementations across the software and hardware stack, with correctness and measurable performance as integral requirements.
+Hardware and software decisions are interdependent: a specialised hardware feature is valuable only if software can use it efficiently, while compiler abstractions influence which architectural capabilities are useful. Recent work has begun to investigate this joint problem. MACO @maco uses multiple agents to generate and iteratively refine coarse-grained reconfigurable array architectures alongside their software configuration. HSCO-Bench @hsco-bench evaluates a broader end-to-end workflow involving application analysis, accelerator integration into a system-on-chip, and software mapping. In its evaluation, only two of five frontier models successfully generated valid @SoC prototypes, and the resulting designs remained far from optimal. These results demonstrate early progress, but not yet general autonomous co-design across arbitrary workloads and hardware platforms.
 
 = Background <sec:background>
 
