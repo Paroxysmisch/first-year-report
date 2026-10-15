@@ -212,7 +212,7 @@
   // very bottom.
   // ---------------------------------------------------------------------
   let title-len = if type(title) == str { title.len() } else { 60 }
-  let title-size = if title-len > 90 { 22pt } else if title-len > 55 { 27pt } else { 33pt }
+  let title-size = if title-len > 90 { 22pt } else if title-len > 55 { 25pt } else { 33pt }
 
   v(1fr)
   text(size: title-size, weight: "bold", fill: ink, font: heading-font)[#title]

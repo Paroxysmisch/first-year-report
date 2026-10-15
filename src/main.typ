@@ -30,7 +30,8 @@
 )
 
 #show: report.with(
-  title: "Investigating the Emergent Dynamics of Distributed Consensus Protocols Under Adversarial Network Partitions",
+  title: [ Automating Machine Learning #linebreak() Systems Development ],
+  // title: [ Automating Machine Learning #linebreak() Systems Development: Optimising Kernels, Building Compilers and Designing Hardware ],
   subtitle: "First Year Report",
   author: "Yash Shah",
   student-id: "123456789",
@@ -263,6 +264,159 @@ Very little of the literature addresses the operational tooling needed to
 make partition tolerance legible to the humans running these systems.
 
 = Thesis proposal
+- Briefly repeat the core problems 1) Model architectures are evolving quickly 2) Hardware is also evolving quickly to help accelerate both training and inference of these models
+- The idea is that there is a spectrum/pipeline of sorts from the kernel generation through to the compiler through to hardware design
+  - At each stage, there is a lot manual effort
+  - The overall thesis is addressing some of the bottlenecks in these stages, paving the way for end-to-end machine learning model and hardware co-design
+- Three chapters to the thesis:
+  - Integrating theorem proving into kernel optimization workflows
+  - Agent integration into (co-)development of the software and hardware stack
+  - AI-accelerated modelling for better design space exploration
+- First chapter
+  - Quickly introduce that we need a lot of new kernels for the new model architectures and hardware architectures, and so we want to use LLMs to address this by automatically generating kernels
+  - However, LLMs can make mistakes so we want some sort of verification that goes beyond just randomized input testing
+  - Refer to the work we looked at for this verification
+    - There are a few areas of improvement for these works
+    - Each proving approach *has* to make some simplifications, but some modelling assumptions are too limiting
+    - Often, newer hardware features, especially a lot of asynchronous hardware stuff, is simply not modelled
+    - Some require writing stuff in a dedicated theorem proving language
+    - Others have limitations of only being able to model kernels with statically known inputs, and cannot handle dynamic control flow
+    - Some other limitations...
+    - Integration into the actual optimization flow is often missing
+  - Glueball addresses these allowing asynchronous feature modelling in NVIDIA's Hopper and Blackwell, as well as working with dynamic control flow/inputs, and integrates well into the optimization flow
+    - However, it has a few limitations 1) No guarantees are provided by it---the theorem prover is just another tool for the LLM, so the output cannot be 100% trusted e.g. we rely on the LLM to convert from Gluon to Z3, and this translation itself may be incorrect
+  - My follow-up work using separation logic on PTX will help address this
+    - The LLM then just comes-up with pre-/post-conditions and proof invariants etc.
+    - Much higher confidence in the output as don't rely on translation into a theorem prover language by an LLM---separation logic allows us to just annotate around the PTX, given we have a semantics model
+    - We also get the benefits of using separation logic over other SMT based approaches e.g. Z3 (need to expand on this)
+  - Other improvements to the optimization itself too
+    - Sometimes, we need optimization to tweak parameters like pipeline depth, etc. This is not strictly optimizing writing the kernel, but making decisions on kernel hyperparameters given hardware knowledge
+    - We can build on work using BO + LLMs to embed LLM hardware knowledge into the search process, and still get confidence + other benefits of BO---this is also much faster to iterate that having the LLM agents manually make these small tweaks to the kernel
+    - Some other directions to take automated kernel generation in (some research needed)
+- Second chapter
+  - Instead of only targeting single kernels/models, can we actually improve the compiler infrastructure itself with LLMs---that way, we can get an entire family of optimized kernels
+  - Quite limited work in this field
+  - Refer to paper using alphaevolve, but it is limited in a few ways---I think the LLM only proposes heurisitcs, not optimizations, and also humans pre-choose what heuristics they want to focus on
+  - This could be automated end-to-end
+  - More research needed to find limitations to address here too
+- Third chapter
+  - Would be cool to do some DSE using some simulators out there e.g. AI GPU cluster networking simulator
+  - Could even create neural approximations to the simulators
+  - Want some possible modelling papers to speed-up simulations with neural techniques, or LLM-assisted search
+  - Look at the literature review to explore ideas
+
+Continued progress in @AI depends on advances in both the software and hardware used to run it. New model architectures, modalities, and training methods can only deliver their full potential when supported by efficient kernels, effective compiler support, and suitable hardware, the development of which remains heavily reliant on specialist expertise. These components lie along a software-hardware spectrum and form the three main areas of this thesis: (1) kernel generation and optimization, (2) compiler development, and (3) hardware design. @fig:spectrum illustrates where this thesis directs its automation efforts within each area, with the long-term goal of enabling automated, end-to-end software–hardware co-design.
+
+#figure(
+  {
+    set text(size: 8.5pt)
+    set par(justify: false, leading: 0.5em)
+
+    let c-kern = rgb("#2563eb")
+    let c-comp = rgb("#7c3aed")
+    let c-hw = rgb("#c2410c")
+    let spectrum = gradient.linear(c-kern, c-comp, c-hw)
+    let spectrum-light = gradient.linear(
+      c-kern.lighten(88%), c-comp.lighten(88%), c-hw.lighten(88%),
+    )
+
+    // Horizontal double-headed arrow filled with the spectrum gradient.
+    let head(dir) = polygon(
+      fill: if dir == "left" { c-kern } else { c-hw },
+      ..if dir == "left" { ((0pt, 3.5pt), (7pt, 0pt), (7pt, 7pt)) }
+        else { ((0pt, 0pt), (7pt, 3.5pt), (0pt, 7pt)) },
+    )
+    let axis = grid(
+      columns: (auto, auto, 1fr, auto, auto),
+      align: horizon,
+      column-gutter: 0pt,
+      text(weight: "bold", fill: c-kern)[Software#h(6pt)],
+      head("left"),
+      rect(width: 100%, height: 2.5pt, fill: spectrum, stroke: none),
+      head("right"),
+      text(weight: "bold", fill: c-hw)[#h(6pt)Hardware],
+    )
+
+    // One stage of the spectrum.
+    let stage(col, title, chapter, items, height: auto) = block(
+      width: 100%,
+      height: height,
+      inset: (x: 7pt, y: 7pt),
+      radius: 4pt,
+      fill: col.lighten(90%),
+      stroke: 0.8pt + col,
+      {
+        align(center)[
+          #text(weight: "bold", fill: col.darken(25%), size: 9pt, title) \
+          #text(fill: col.darken(10%), size: 7.5pt, style: "italic", chapter)
+        ]
+        v(2pt)
+        set align(left)
+        set list(marker: text(fill: col)[•], spacing: 0.45em, indent: 0pt, body-indent: 4pt)
+        items
+      },
+    )
+
+    let chevron(col) = text(fill: col, size: 14pt, weight: "bold")[›]
+
+    let stage-specs = (
+      (c-kern, [Algorithms & Kernels], [Chapter 1], [
+        - Optimizing @ML model operations and architectures
+        - Correctness of optimisations
+      ]),
+      (c-comp, [Compiler Infrastructure], [Chapter 2], [
+        - Lowering kernels onto new hardware targets
+        - Exposing new hardware features to software
+      ]),
+      (c-hw, [Hardware design], [Chapter 3], [
+        - Performance modelling and simulation
+        - @DSE:l
+      ]),
+    )
+
+    // Equal-height stage boxes: measure each at its final width, use the tallest.
+    let chev-w = 10pt
+    let gutter = 3pt
+    let stages = layout(size => {
+      let w = (size.width - 2 * chev-w - 4 * gutter) / 3
+      let h = calc.max(..stage-specs.map(s => measure(block(width: w, stage(..s))).height))
+      let boxes = stage-specs.map(s => stage(..s, height: h))
+      grid(
+        columns: (1fr, chev-w, 1fr, chev-w, 1fr),
+        column-gutter: gutter,
+        align: (x, y) => if calc.odd(x) { horizon + center } else { top },
+        boxes.at(0), chevron(c-comp), boxes.at(1), chevron(c-hw), boxes.at(2),
+      )
+    })
+
+    // Co-design goal spanning the whole spectrum.
+    let goal = block(
+      width: 100%,
+      inset: (x: 8pt, y: 6pt),
+      radius: 4pt,
+      fill: spectrum-light,
+      stroke: (paint: spectrum, thickness: 0.8pt),
+      align(center)[
+        #text(weight: "bold")[Goal:] automated, end-to-end software–hardware co-design
+      ],
+    )
+
+    stack(
+      dir: ttb,
+      spacing: 6pt,
+      axis,
+      stages,
+      goal,
+    )
+  },
+  caption: [The spectrum of software-hardware development considered in this
+    thesis. Each chapter focuses on increasing the level of automation at one stage, working
+    towards automated end-to-end co-design.],
+) <fig:spectrum>
+
+
+
+
 == Thesis chapters
 === Integrating theorem proving into kernel optimization workflows
 
