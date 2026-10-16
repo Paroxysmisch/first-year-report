@@ -29,6 +29,30 @@
   ("RL", "Reinforcement Learning"),
 )
 
+#let yes = text(fill: rgb("#1a7f37"), sym.checkmark)
+#let no = text(fill: rgb("#b42318"), sym.crossmark)
+
+// Gap-analysis table: one column per feature, one row per prior work, and the
+// proposed work as the last row (ticked in every column).
+#let feature-table(features, rows, ours) = {
+  set text(size: 7pt)
+  set par(justify: false)
+  let mark(b) = if b { yes } else { no }
+  table(
+    columns: (2.3fr,) + (1fr,) * features.len(),
+    align: (x, y) => if x == 0 { left + horizon } else { center + horizon },
+    inset: 3pt,
+    stroke: none,
+    table.hline(),
+    table.header([*Work*], ..features.map(f => text(weight: "bold", f))),
+    table.hline(stroke: 0.5pt),
+    ..rows.map(r => (r.at(0), ..r.slice(1).map(mark))).flatten(),
+    table.hline(stroke: 0.5pt),
+    text(weight: "bold", ours), ..features.map(_ => yes),
+    table.hline(),
+  )
+}
+
 #show: report.with(
   title: [ Automating Machine Learning #linebreak() Systems Development ],
   // title: [ Automating Machine Learning #linebreak() Systems Development: Optimising Kernels, Building Compilers and Designing Hardware ],
@@ -211,58 +235,6 @@ More recent work integrates @LLM:pla into this optimization loop. Trust-aware @L
 
 Performance prediction has also been integrated into kernel optimization. Mapo @Mapo combines a multi-modal model of @GPU memory-access behavior with an @LLM\-based optimization loop, using predicted performance metrics as feedback to guide memory-oriented code transformations. This illustrates how learned models can provide quantitative feedback that is cheaper than repeatedly profiling each generated candidate. More broadly, these approaches suggest an opportunity to model the interaction between a kernel, its compiler mapping, and the target hardware rather than modelling the software or hardware in isolation. For custom accelerator design, such a model could combine inexpensive analytical or emulated evaluations with selectively collected simulation results, while using active learning to decide which candidates merit expensive evaluation. Success should therefore be measured not only by prediction error, but also by the quality of the designs found under a fixed evaluation budget and by generalisation to unseen workloads and hardware configurations.
 
-= Background <sec:background>
-
-Classical results on distributed time and ordering  underpin
-much of modern consensus theory. More recent machine-learning approaches to
-anomaly detection in distributed traces  and
-attention-based sequence models  suggest promising
-directions for automatically characterizing partition-induced failure
-modes.
-
-== Related Work
-
-Prior work broadly falls into three categories: theoretical impossibility
-results, empirical fault-injection studies, and learned failure predictors.
-
-Theoretical work dates back to the FLP impossibility result, which shows
-that no deterministic consensus protocol can guarantee both safety and
-liveness in a fully asynchronous system where even a single process may
-crash. Subsequent work relaxed this model in various ways: partial
-synchrony assumptions, randomized protocols, and failure detectors each
-recover liveness under different additional assumptions about the network.
-
-Empirical fault-injection studies take a complementary approach, running
-real implementations against synthetically induced partitions, message
-delays, and node crashes to characterize how systems behave in practice
-rather than in the worst case. These studies have repeatedly found that
-production systems violate their theoretical guarantees under conditions
-that are individually rare but collectively common at scale.
-
-Learned failure predictors are the most recent addition to this landscape,
-using traces of past incidents to anticipate partition-induced failures
-before they cascade. Early results are promising but rely on labeled
-incident data that is scarce and organization-specific, limiting how well
-these models transfer across deployments.
-
-== Open Problems
-
-No existing approach jointly optimizes for both liveness under partition
-and provable safety guarantees while remaining practical at scale.
-
-A second open problem is evaluation: there is no standard benchmark suite
-for partition tolerance, so published results across papers are difficult
-to compare directly. Different works use different topologies, partition
-schedules, and workloads, making it hard to tell whether a reported
-improvement reflects a genuine advance or simply a more favorable
-experimental setup.
-
-A third, more practical problem is operability: even a protocol with
-strong theoretical guarantees is of limited use if operators cannot
-observe, reason about, and recover from a partition while it is happening.
-Very little of the literature addresses the operational tooling needed to
-make partition tolerance legible to the humans running these systems.
-
 = Thesis proposal
 - Briefly repeat the core problems 1) Model architectures are evolving quickly 2) Hardware is also evolving quickly to help accelerate both training and inference of these models
 - The idea is that there is a spectrum/pipeline of sorts from the kernel generation through to the compiler through to hardware design
@@ -414,17 +386,46 @@ Continued progress in @AI depends on advances in both the software and hardware 
     towards automated end-to-end co-design.],
 ) <fig:spectrum>
 
+== Agentic Kernel Optimization and Verification
 
+@LLM agents can now write and optimise kernels for both @GPU:pla and emerging accelerators, using compiler, profiler and benchmarking feedback to search for faster implementations @kernelbench @TritonGym @KernelFoundry @DrKernel @KernelCraft. However, verification of these generated kernels has received far less attention. Most systems accept a kernel if its outputs match a reference, within a tolerance, on a small set of random inputs. Random inputs rarely reach the cases where kernels actually fail, for example on tensor values with extreme magnitudes, catastrophic cancellation, or reduced-precision accumulation.
 
+The problem is worse on modern asynchronous hardware. On Hopper and Blackwell, specialised producer and consumer warps coordinate @TMA transfers, asynchronous tensor-core operations and memory barriers, so correctness can depend on thread interleavings that a test run may never produce. The consequences are measurable. Under hardened evaluation, the best frontier model's geometric-mean speedup over PyTorch falls from 1.43× to 0.88× @kernelbench-verified, and SOL-ExecBench flags 14.5% of agent submissions as reward hacking @sol-execbench.
 
-== Thesis chapters
-=== Integrating theorem proving into kernel optimization workflows
+Existing work on @GPU kernel verification covers parts of this problem, but none of it covers modern optimised kernels (@tab:ch1-gap). GPUVerify @gpuverify and Faial @static-analysis-gpu detect data races and barrier errors soundly, but they check safety rather than functional correctness and predate asynchronous hardware. GKLEE @gklee and ESBMC-GPU @esbmc-gpu apply symbolic execution and bounded model checking to CUDA, but they predate tensor cores and their verification times scale poorly. VOLTA @volta checks the equivalence of @ML kernels, but it requires static shapes, compares a single @CTA, excludes asynchronous primitives and models tensor elements as reals. Kuiper @Kuiper proves functional correctness, but only for kernels rewritten in F\*, and ProofWright's agentic verification @ProofWright does not support `mma` or `wgmma`. Fuzzing avoids these restrictions but prior work's effectiveness depends on a hand-chosen input generation strategy @kernel-test-input-generation. Treating floating-point values as reals is particularly risky, because tensor-core arithmetic differs between architectures. For example, FP8 accumulation keeps 13 fractional bits on Hopper but 25 on Blackwell @mma-sim, so a kernel that is accurate on one @GPU can be wrong on the next.
+//
+// In my first year, I developed Glueball, which brings formal verification into an agentic optimisation loop for Gluon kernels. Gluon is a tile-level language in the Triton ecosystem that exposes asynchronous hardware features such as @TMA and warp specialisation. In Glueball, agents optimise all the kernels of a model jointly for end-to-end performance, and every candidate kernel must pass a correctness pipeline before it is accepted. The pipeline symbolically executes Triton @IR into Z3 @z3, modelling elementwise arithmetic exactly in IEEE floating point. It also gives agents a Gluon-to-Z3 library for modelling hardware properties such as asynchronous race freedom, barrier ordering and pipeline-stage isolation. When a check fails, the counterexample is turned into a concrete test that runs on the @GPU, and the result guides the agent's repairs. Across four frontier models, the pipeline improved bug detection on a suite of generic kernel bugs without introducing false positives. On a synchronisation suite, it removed up to five false positives among twelve correct kernels, showing that asynchronous semantics are hard for models to reason about from source code alone. Agents also found real speedups, ranging from better @TMA data movement in GPT-OSS and Qwen-3.5 @MoE to an algorithmic rewrite of neighbourhood attention roughly 24× faster than the Triton reference. Glueball also exposed the limits of proving correctness this way. Reductions, memory accesses and `dot` operations are opaque to its symbolic model, so accumulation order and precision are never checked formally. Its "correct" verdicts depend on @LLM\-built models and on @LLM reasoning across these opaque regions, neither of which can be fully trusted. Its fixed pipeline of specialised agents also limits which tools can be applied.
 
-=== Agent integration into (co-)development of the software and hardware stack
-- Can do some work on LLMs' understanding of Intermediate Representations
-  - Inspired from #link("https://raw.githubusercontent.com/mlresearch/v267/main/assets/jiang25p/jiang25p.pdf")[this paper]
+#figure(
+  feature-table(
+    ([Functional Equivalence], [Async Ops], [Symbolic Execution], [Bit-Accurate FP], [Thread Interleavings], [Hardware-Validated Witnesses], [Unmodified Kernels], [In opt. loop]),
+    (
+      ([GPUVerify, Faial], false, false, true, false, true, false, true, false),
+      ([GKLEE, ESBMC-GPU], false, false, false, false, true, false, true, false),
+      ([VOLTA], true, false, false, false, false, false, true, false),
+      ([Kuiper], true, false, true, false, true, false, false, false),
+      ([ProofWright], true, false, true, false, true, false, true, false),
+      ([KernelBench-Verified], true, true, false, false, false, true, true, false),
+      ([Adversarial fuzzing], true, true, false, false, false, false, true, false),
+      ([Glueball (Year 1)], true, true, true, false, true, true, true, true),
+    ),
+    [Proposed inequivalence checker],
+  ),
+  caption: [Gap analysis for Chapter 1: features of prior work on @GPU:s kernel correctness.],
+) <tab:ch1-gap>
 
-=== AI-accelerated modelling for better design space exploration
+== Automated Compiler Development for Emerging Hardware
+
+== AI-accelerated Performance Modelling
+
+// == Thesis chapters
+// === Integrating theorem proving into kernel optimization workflows
+//
+// === Agent integration into (co-)development of the software and hardware stack
+// - Can do some work on LLMs' understanding of Intermediate Representations
+//   - Inspired from #link("https://raw.githubusercontent.com/mlresearch/v267/main/assets/jiang25p/jiang25p.pdf")[this paper]
+//
+// === AI-accelerated modelling for better design space exploration
 
 = Methodology <sec:methodology>
 
