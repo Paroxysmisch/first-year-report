@@ -405,7 +405,7 @@ Existing work on @GPU kernel verification covers parts of this problem, but none
       ([ProofWright], true, false, true, false, true, false, true, false),
       ([KernelBench-Verified], true, true, false, false, false, true, true, false),
       ([Adversarial fuzzing], true, true, false, false, false, false, true, false),
-      ([Glueball (Year 1)], true, true, true, false, true, true, true, true),
+      ([*Glueball (Year 1)*], true, true, true, false, true, true, true, true),
     ),
     [Proposed inequivalence checker],
   ),
@@ -420,6 +420,11 @@ Although Glueball improves both the precision and recall of bug detection, parti
 I propose to investigate an alternative approach based on _inequivalence checking_. Rather than relying on an LLM to construct a formal representation of the kernel for verification, the project would use adversarial agents to search for inputs that cause a reference kernel and its optimized counterpart to produce different results. The agents would have access to a broad suite of tools, including theorem provers, fuzzers, debuggers, and static and runtime analyses, allowing them to explore the input space without being restricted to a fixed verification pipeline. Crucially, when a candidate is rejected on the basis of a validated counterexample, the rejection is grounded in a concrete discrepancy between the two kernels.
 
 == Automated Compiler Development for Emerging Hardware
+A new accelerator and its hardware features are only useful if software can exploit them effectively. The rapid evolution of machine learning algorithms and hardware accelerators places a substantial burden on compiler engineers, who must ensure that kernels written in high-level languages such as Triton can take full advantage of the underlying hardware. For example, NVIDIA's Hopper architecture introduced asynchronous @TMA transfers, warp-group @MMA instructions, and thread-block clusters. Yet FlashAttention-2 achieved only 35% of the H100's peak throughput, in part because it could not exploit these features; FlashAttention-3 subsequently raised this to 75%, more than two years after Hopper was announced @flashattention-3.
+
+Recent advances in @LLM:pla have enabled kernel generation at multiple levels of the stack, from high-level languages such as Triton @TritonGym @DrKernel, through CUDA @kernelbench @StitchCUDA, to direct generation of @PTX:s and accelerator assembly @ai-as-compiler @KernelCraft. However, generation becomes increasingly challenging at lower levels of abstraction. Low-level code offers fewer safety abstractions and less protection against errors than higher-level programming and compilation pipelines. On unfamiliar accelerator @ISA:pla, for example, hallucinated opcodes are a leading cause of syntax errors @KernelCraft.
+
+More fundamentally, low-level optimization requires reasoning about dependencies and resource usage across the entire kernel: register allocation and instruction scheduling depend on global dataflow and instruction dependencies, whereas @LLM:pla can parse @IR syntax but struggle with control flow, loops, and execution semantics @llms-ir-understanding. Register allocation illustrates this gap. The @IR of a single multi-head attention kernel can exceed tens of thousands of tokens, yet a general-purpose model tasked with allocating registers may resort to naive sequential assignment without reuse. Even a model fine-tuned for this task makes mistakes, 62–73% of which are dataflow violations; producing valid allocations requires a Z3-based verifier and repeated resampling @verilocc. Tellingly, state-of-the-art direct @GPU kernel generation targets @PTX:s, a virtual @ISA with an unbounded register model, thereby leaving physical register allocation and much of the low-level instruction scheduling to NVIDIA's assembler @ai-as-compiler.
 
 == AI-accelerated Performance Modelling
 
