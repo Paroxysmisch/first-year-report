@@ -27,6 +27,7 @@
   ("BO", "Bayesian Optimization"),
   ("ISA", "Instruction Set Architecture"),
   ("RL", "Reinforcement Learning"),
+  ("CPU", "Central Processing Unit"),
 )
 
 #let yes = text(fill: rgb("#1a7f37"), sym.checkmark)
@@ -340,7 +341,7 @@ Continued progress in @AI depends on advances in both the software and hardware 
         - Lowering kernels onto new hardware targets
         - Exposing new hardware features to software
       ]),
-      (c-hw, [Hardware design], [Chapter 3], [
+      (c-hw, [Hardware Design], [Chapter 3], [
         - Performance modelling and simulation
         - @DSE:l
       ]),
@@ -386,7 +387,7 @@ Continued progress in @AI depends on advances in both the software and hardware 
     towards automated end-to-end co-design.],
 ) <fig:spectrum>
 
-== Agentic Kernel Optimization and Verification
+== Agentic Kernel Optimization and Verification <sec:ch1>
 
 @LLM agents can now write and optimise kernels for both @GPU:pla and emerging accelerators, using compiler, profiler and benchmarking feedback to search for faster implementations @kernelbench @TritonGym @KernelFoundry @DrKernel @KernelCraft. However, verification of these generated kernels has received far less attention. Most systems accept a kernel if its outputs match a reference, within a tolerance, on a small set of random inputs. Random inputs rarely reach the cases where kernels actually fail, for example on tensor values with extreme magnitudes, catastrophic cancellation, or reduced-precision accumulation.
 
@@ -425,6 +426,31 @@ A new accelerator and its hardware features are only useful if software can expl
 Recent advances in @LLM:pla have enabled kernel generation at multiple levels of the stack, from high-level languages such as Triton @TritonGym @DrKernel, through CUDA @kernelbench @StitchCUDA, to direct generation of @PTX:s and accelerator assembly @ai-as-compiler @KernelCraft. However, generation becomes increasingly challenging at lower levels of abstraction. Low-level code offers fewer safety abstractions and less protection against errors than higher-level programming and compilation pipelines. On unfamiliar accelerator @ISA:pla, for example, hallucinated opcodes are a leading cause of syntax errors @KernelCraft.
 
 More fundamentally, low-level optimization requires reasoning about dependencies and resource usage across the entire kernel: register allocation and instruction scheduling depend on global dataflow and instruction dependencies, whereas @LLM:pla can parse @IR syntax but struggle with control flow, loops, and execution semantics @llms-ir-understanding. Register allocation illustrates this gap. The @IR of a single multi-head attention kernel can exceed tens of thousands of tokens, yet a general-purpose model tasked with allocating registers may resort to naive sequential assignment without reuse. Even a model fine-tuned for this task makes mistakes, 62–73% of which are dataflow violations; producing valid allocations requires a Z3-based verifier and repeated resampling @verilocc. Tellingly, state-of-the-art direct @GPU kernel generation targets @PTX:s, a virtual @ISA with an unbounded register model, thereby leaving physical register allocation and much of the low-level instruction scheduling to NVIDIA's assembler @ai-as-compiler.
+
+Beyond these difficulties, direct generation is also an inefficient long-term strategy, since the generation cost recurs for every new kernel and hardware revision. Having agents build the compiler instead produces a reusable artifact. It encodes the hardware's semantics once, generalises across kernels and workloads, can be verified and maintained like any other software, and can be extended as the hardware evolves.
+
+#figure(
+  feature-table(
+    ([New accelerator target], [Reusable Compiler], [Automated construction], [Natural-Language Docs], [New Hardware Extensibility]),
+    (
+      ([VEGA], false, true, true, false, false),
+      ([Act], true, true,  true, false, true),
+      ([KernelCraft], true, false, true, true, true),
+      ([AI as a Compiler], false, false, true, true, false),
+      // ([Zomboss], true, true, false, true, false, false),
+    ),
+    [Proposed agent-built compiler],
+  ),
+  caption: [Gap analysis for Chapter 2: features of prior work on compilers and code generation for emerging hardware.],
+  placement: top,
+) <tab:ch2-gap>
+
+My proposed project therefore asks whether @LLM agents can build optimizing compilers for new accelerators. Automated backend generation has been explored before, but under strong assumptions and still requiring significant manual effort. VEGA @vega fills in function templates mined from existing LLVM backends, but cannot produce code for features with no counterpart in existing backends. Additionally, a significant number of generated templates still need correcting by hand. ACT @act-backend-generation generates provably sound tensor-accelerator backends for XLA @xla , but its guarantees hold only relative to an expert-written formal @ISA description. It cannot discover where that description diverges from the real hardware, and it requires exact semantic equivalence. It also only accepts XLA's tensor @IR, and it optimizes each tile in isolation, relying on XLA's middle-end for most tiling and fusion decisions. Importantly, it relies heavily on analytical cost modelling, which is likely imprecise for any emerging accelerator with novel hardware features.
+
+I aim to built a system where agents develop XLA and Triton backends for PLENA @plena, an accelerator for long-context agentic inference. Agents must build their understanding of the hardware via documentation and conduct their own experiments where hardware semantics details are missing or ambiguous. Targeting both XLA and Triton also provides a natural correctness oracle: JAX @jax programs and Triton kernels compiled by the agent-built backends and executed on the PLENA simulator can be compared against the same programs running on a @CPU, and the inequivalence checking of @sec:ch1 can also be integrated into this work. The evaluation will measure coverage and correctness on held-out programs, performance relative to PLENA's existing hand-written compiler, and total development cost compared with generating each kernel directly.
+
+As an extension, recent hardware proposals, such as new tensor-core designs @lut-tensor-core, will be integrated into PLENA, and the agents will be tasked with adapting their compilers to exploit them. Measuring how well and how quickly agents can bring software support to new hardware is a concrete step towards automated software–hardware co-design. @tab:ch2-gap illustrates how my proposed project compares to existing work.
+
 
 == AI-accelerated Performance Modelling
 
