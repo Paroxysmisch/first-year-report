@@ -397,7 +397,7 @@ Existing work on @GPU kernel verification covers parts of this problem, but none
 
 #figure(
   feature-table(
-    ([Functional Equivalence], [Async Ops], [Symbolic Execution], [Bit-Accurate FP], [Thread Interleavings], [Hardware-Validated Witnesses], [Unmodified Kernels], [In opt. loop]),
+    ([Functional Equivalence], [Async Ops], [Symbolic Execution], [Bit-Accurate FP], [Thread Interleavings], [Hardware-Validated Witnesses], [Unmodified Kernels], [In Opt. Loop]),
     (
       ([GPUVerify, Faial], false, false, true, false, true, false, true, false),
       ([GKLEE, ESBMC-GPU], false, false, false, false, true, false, true, false),
@@ -431,10 +431,10 @@ Beyond these difficulties, direct generation is also an inefficient long-term st
 
 #figure(
   feature-table(
-    ([New accelerator target], [Reusable Compiler], [Automated construction], [Natural-Language Docs], [New Hardware Extensibility]),
+    ([New Accelerator Target], [Reusable Compiler], [Automated construction], [Natural-Language Docs], [New Hardware Extensibility]),
     (
       ([VEGA], false, true, true, false, false),
-      ([Act], true, true,  true, false, true),
+      ([ACT], true, true,  true, false, true),
       ([KernelCraft], true, false, true, true, true),
       ([AI as a Compiler], false, false, true, true, false),
       // ([Zomboss], true, true, false, true, false, false),
@@ -504,14 +504,52 @@ Early results are encouraging: the proposed variant reduces tail latency
 under partition by roughly 3.5x relative to the baseline, though further
 runs are needed to establish statistical significance.
 
+= Progress Report
+- Teaching activities
+  - Supervised Advanced Computer Architecture last year
+  - Also supervising the course again this year
+  - Demonstrator for ECAD labs this year
+  - Volunteered as part of the Cambridge Outreach program
+- Part of the ACACES summer school
+- Industry
+  - I would like to pursue a collaboration with industry so flew out to San Francisco to meet the Flapping Airplanes team
+- ICLR Conference paper
+  - Glueball paper under review at ICLR 2027
+- Collaboration with other groups
+  - Worked with another student on a computational biology workshop paper that got accepted at ICML 2026
+
 = Timeline and Future Work <timeline>
 
-== Year Two
+== Year 1
+=== Michaelmas 2026
+- Respond to reviews for the Glueball paper.
+- Start work on the agentic inequivalence checking project
 
-Extend the fault model to include Byzantine nodes and repeat the
-experimental sweep at larger cluster sizes.
+== Year 2
+=== Lent 2027
+- Run experiments and write the agentic inequivalence checking paper.
+- Write-up work on agentic kernel optimization and verification as a manuscript.
 
-== Year Three
+=== Easter 2027
+- Start work on the agentic compiler generation project.
 
-Write up formal safety proofs and prepare the primary dissertation
-publication.
+=== Michaelmas 2027
+- Submit the agentic compiler generation paper.
+- Start work on hardware-aware performance optimization of inference workloads across a representative set of unique, new model architectures.
+
+== Year 3
+=== Lent 2028
+- Submit hardware-aware inference optimization paper.
+- Start work on AI-accelerated performance modelling and design space exploration.
+- Write-up work on automated compiler development for emerging hardware as a manuscript.
+
+=== Easter 2028
+- Submit performance modelling paper.
+- Undertake an industry research internship in machine learning research, preferably software-hardware co-design related.
+- Write-up work on @AI\-accelerated performance modelling as a manuscript.
+
+=== Michaelmas 2028
+- Finish writing and revising; ready for thesis submission.
+
+
+
