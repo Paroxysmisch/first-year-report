@@ -454,34 +454,35 @@ As an extension, recent hardware proposals, such as new tensor-core designs @lut
 
 
 == AI-accelerated Performance Modelling
-Detailed simulation remains a standard method for evaluating hardware designs, but its computational cost makes exhaustive exploration of large design spaces impractical. This has motivated two largely separate strands of learned performance modelling. The first predicts how a workload executes on a given hardware design. SimNet, TAO and NeuroScalar learn instruction latencies directly from execution traces @simnet @tao-sim @neuroscalar. Concorde @concorde combines analytical throughput bounds for individual hardware resources, derived from the instruction stream, with a compact learned model to predict cycles per instruction at a fraction of the cost of simulation. By basing its learned component on resource-level bounds rather than raw instruction sequences, Concorde aims to generalize more readily across hardware designs than approaches such as TAO. NeuSight @neusight applies related techniques to predict @GPU kernel latency.
+Detailed simulation remains a standard method for evaluating hardware designs, but its computational cost makes exhaustive exploration of large design spaces impractical. This has motivated two largely separate strands of learned performance modelling. The first predicts how a workload executes on a given hardware design. SimNet, TAO and NeuroScalar learn instruction latencies directly from execution traces @simnet @tao-sim @neuroscalar. Concorde @concorde combines analytical performance bounds for individual hardware resources, derived from the instruction stream, with a small learned model to predict cycles per instruction at a fraction of the cost of simulation. By basing its learned component on resource-level bounds rather than raw instruction sequences, Concorde aims to generalize more readily across hardware designs than approaches such as TAO. NeuSight @neusight applies related techniques to predict @GPU kernel latency.
 
 However, these models represent hardware in restricted ways: SimNet, NeuroScalar and TAO typically assume a fixed target architecture or require design-specific learned embeddings, while Concorde and NeuSight describe hardware through configuration parameters or specification features, supplemented by analytical models. Furthermore, they primarily predict execution latency or cycle counts rather than power and area, and extending them to fundamentally new hardware units generally requires additional modelling effort and training data.
 
-The second strand predicts the implementation cost of the *hardware* itself from its circuit description. CircuitFusion @circuitfusion jointly encodes three modalities of @RTL designs: @HDL, structural graphs, and natural-language descriptions of functionality. It aligns these representations with synthesised netlists and outperforms task-specific models in predicting timing slack, power, and area. TopoRTL @toportl builds on this direction by modelling circuit topology directly from @RTL, while NetTAG @nettag extends the approach to gate-level netlists and DynamicRTL @dynamicrtl learns from simulation traces to capture dynamic circuit behaviour.
+The second strand predicts the implementation cost of the hardware itself from its circuit description. CircuitFusion @circuitfusion jointly encodes three modalities of @RTL designs: @HDL, structural graphs, and natural-language descriptions of functionality. It aligns these representations with synthesised netlists and outperforms task-specific models in predicting timing slack, power, and area. TopoRTL @toportl builds on this direction by modelling circuit topology directly from @RTL, while NetTAG @nettag extends the approach to gate-level netlists and DynamicRTL @dynamicrtl learns from simulation traces to capture dynamic circuit behaviour.
 
-Although these models can generalize to previously unseen circuits, they are largely workload-agnostic: their power estimates typically rely on generic assumptions about switching activity, and they do not predict how quickly a design executes a particular program. Analytical toolchains such as Timeloop and Accelergy @timeloop @accelergy bridge part of this gap by connecting workload behaviour to estimates of energy and area. However, they rely on hand-crafted component models that must be extended manually to accommodate new types of hardware units.
+#figure(
+  feature-table(
+    ([Hardware as Circuit (@RTL)], [Workload-Aware Performance], [Power], [Area], [No Retraining for New Hardware], [Learned from Data]),
+    (
+      ([Concorde], false, true, false, false, false, true),
+      ([NeuroScalar], false, true, false, false, false, true),
+      ([TAO], false, true, false, false, false, true),
+      ([NeuSight], false, true, false, false, false, true),
+      ([Timeloop, Accelergy], false, true, true, true, false, false),
+      ([CircuitFusion], true, false, true, true, true, true),
+      ([TopoRTL], true, false, true, true, true, true),
+    ),
+    [Unified hardware–workload model (this work)],
+  ),
+  caption: [Gap analysis for Chapter 3: features of prior performance and circuit modelling work.],
+) <tab:ch3-gap>
+
+Although these models can generalize to previously unseen circuits, they are largely workload-agnostic e.g., their power estimates typically rely on generic assumptions about switching activity, and they do not predict how quickly a design executes a particular program. Analytical toolchains such as Timeloop and Accelergy @timeloop @accelergy bridge part of this gap by connecting workload behaviour to estimates of energy and area. However, they rely on hand-crafted component models that must be extended manually to accommodate new types of hardware units.
 
 My proposed project aims to unify these two strands in a single framework that predicts execution time, energy, power, and area for combinations of hardware designs and workloads within a family of accelerators. The hardware would be represented by its configuration alongside learned embeddings of each unit's @RTL, while the workload would be represented by its instruction stream, compiled for the target design. By modelling both sides, the framework could exploit their physical interactions: execution time depends on the number of cycles and the clock period, while dynamic energy depends on workload-induced activity in each hardware unit and the energy consumed by its operations. Each hardware variant would be synthesized once to estimate its area, clock frequency, and relevant implementation characteristics. Each design–workload pairing would then be simulated via PLENA to generate training data for the learned model.
 
 The central evaluation will hold out hardware-workload pairings during training, assessing how accurately the model predicts their impact on execution time, energy, power, and derived metrics such as performance per watt. The aim is to generalize to unseen combinations using the hardware's @RTL and the workload's compiled instruction stream, rather than relying on a separately developed analytical model for every hardware unit. Prediction accuracy and evaluation cost will be compared against full @RTL and transaction-level simulation. By making performance modelling more adaptable to new hardware structures while accounting for workload-specific behaviour, this project could provide a foundation for more automated and scalable software–hardware co-design. @tab:ch3-gap summarizes how the proposed approach differs from existing performance-modelling methods.
 
-#figure(
-  feature-table(
-    ([Workload-aware], [Hardware as circuit (@RTL:s)], [Execution time], [Workload-dependent power], [Area], [Unseen hardware structures], [Learned from data]),
-    (
-      ([Concorde @concorde], true, false, false, false, false, false, true),
-      ([NeuroScalar @neuroscalar], true, false, false, false, false, false, true),
-      ([TAO @tao-sim], true, false, false, false, false, false, true),
-      ([NeuSight @neusight], true, false, true, false, false, false, true),
-      ([Timeloop + Accelergy @timeloop @accelergy], true, false, true, true, true, false, false),
-      ([CircuitFusion @circuitfusion], false, true, false, false, true, true, true),
-      ([TopoRTL @toportl], false, true, false, false, true, true, true),
-    ),
-    [Unified hardware–workload model (this work)],
-  ),
-  caption: [Gap analysis for Chapter 3: features of prior performance and circuit models.],
-) <tab:ch3-gap>
 
 // == Thesis chapters
 // === Integrating theorem proving into kernel optimization workflows
