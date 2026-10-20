@@ -238,46 +238,46 @@ More recent work integrates @LLM:pla into this optimization loop. Trust-aware @L
 Performance prediction has also been integrated into kernel optimization. Mapo @Mapo combines a multi-modal model of @GPU memory-access behavior with an @LLM\-based optimization loop, using predicted performance metrics as feedback to guide memory-oriented code transformations. This illustrates how learned models can provide quantitative feedback that is cheaper than repeatedly profiling each generated candidate. More broadly, these approaches suggest an opportunity to model the interaction between a kernel, its compiler mapping, and the target hardware rather than modelling the software or hardware in isolation. For custom accelerator design, such a model could combine inexpensive analytical or emulated evaluations with selectively collected simulation results, while using active learning to decide which candidates merit expensive evaluation. Success should therefore be measured not only by prediction error, but also by the quality of the designs found under a fixed evaluation budget and by generalisation to unseen workloads and hardware configurations.
 
 = Thesis proposal
-- Briefly repeat the core problems 1) Model architectures are evolving quickly 2) Hardware is also evolving quickly to help accelerate both training and inference of these models
-- The idea is that there is a spectrum/pipeline of sorts from the kernel generation through to the compiler through to hardware design
-  - At each stage, there is a lot manual effort
-  - The overall thesis is addressing some of the bottlenecks in these stages, paving the way for end-to-end machine learning model and hardware co-design
-- Three chapters to the thesis:
-  - Integrating theorem proving into kernel optimization workflows
-  - Agent integration into (co-)development of the software and hardware stack
-  - AI-accelerated modelling for better design space exploration
-- First chapter
-  - Quickly introduce that we need a lot of new kernels for the new model architectures and hardware architectures, and so we want to use LLMs to address this by automatically generating kernels
-  - However, LLMs can make mistakes so we want some sort of verification that goes beyond just randomized input testing
-  - Refer to the work we looked at for this verification
-    - There are a few areas of improvement for these works
-    - Each proving approach *has* to make some simplifications, but some modelling assumptions are too limiting
-    - Often, newer hardware features, especially a lot of asynchronous hardware stuff, is simply not modelled
-    - Some require writing stuff in a dedicated theorem proving language
-    - Others have limitations of only being able to model kernels with statically known inputs, and cannot handle dynamic control flow
-    - Some other limitations...
-    - Integration into the actual optimization flow is often missing
-  - Glueball addresses these allowing asynchronous feature modelling in NVIDIA's Hopper and Blackwell, as well as working with dynamic control flow/inputs, and integrates well into the optimization flow
-    - However, it has a few limitations 1) No guarantees are provided by it---the theorem prover is just another tool for the LLM, so the output cannot be 100% trusted e.g. we rely on the LLM to convert from Gluon to Z3, and this translation itself may be incorrect
-  - My follow-up work using separation logic on PTX will help address this
-    - The LLM then just comes-up with pre-/post-conditions and proof invariants etc.
-    - Much higher confidence in the output as don't rely on translation into a theorem prover language by an LLM---separation logic allows us to just annotate around the PTX, given we have a semantics model
-    - We also get the benefits of using separation logic over other SMT based approaches e.g. Z3 (need to expand on this)
-  - Other improvements to the optimization itself too
-    - Sometimes, we need optimization to tweak parameters like pipeline depth, etc. This is not strictly optimizing writing the kernel, but making decisions on kernel hyperparameters given hardware knowledge
-    - We can build on work using BO + LLMs to embed LLM hardware knowledge into the search process, and still get confidence + other benefits of BO---this is also much faster to iterate that having the LLM agents manually make these small tweaks to the kernel
-    - Some other directions to take automated kernel generation in (some research needed)
-- Second chapter
-  - Instead of only targeting single kernels/models, can we actually improve the compiler infrastructure itself with LLMs---that way, we can get an entire family of optimized kernels
-  - Quite limited work in this field
-  - Refer to paper using alphaevolve, but it is limited in a few ways---I think the LLM only proposes heurisitcs, not optimizations, and also humans pre-choose what heuristics they want to focus on
-  - This could be automated end-to-end
-  - More research needed to find limitations to address here too
-- Third chapter
-  - Would be cool to do some DSE using some simulators out there e.g. AI GPU cluster networking simulator
-  - Could even create neural approximations to the simulators
-  - Want some possible modelling papers to speed-up simulations with neural techniques, or LLM-assisted search
-  - Look at the literature review to explore ideas
+// - Briefly repeat the core problems 1) Model architectures are evolving quickly 2) Hardware is also evolving quickly to help accelerate both training and inference of these models
+// - The idea is that there is a spectrum/pipeline of sorts from the kernel generation through to the compiler through to hardware design
+//   - At each stage, there is a lot manual effort
+//   - The overall thesis is addressing some of the bottlenecks in these stages, paving the way for end-to-end machine learning model and hardware co-design
+// - Three chapters to the thesis:
+//   - Integrating theorem proving into kernel optimization workflows
+//   - Agent integration into (co-)development of the software and hardware stack
+//   - AI-accelerated modelling for better design space exploration
+// - First chapter
+//   - Quickly introduce that we need a lot of new kernels for the new model architectures and hardware architectures, and so we want to use LLMs to address this by automatically generating kernels
+//   - However, LLMs can make mistakes so we want some sort of verification that goes beyond just randomized input testing
+//   - Refer to the work we looked at for this verification
+//     - There are a few areas of improvement for these works
+//     - Each proving approach *has* to make some simplifications, but some modelling assumptions are too limiting
+//     - Often, newer hardware features, especially a lot of asynchronous hardware stuff, is simply not modelled
+//     - Some require writing stuff in a dedicated theorem proving language
+//     - Others have limitations of only being able to model kernels with statically known inputs, and cannot handle dynamic control flow
+//     - Some other limitations...
+//     - Integration into the actual optimization flow is often missing
+//   - Glueball addresses these allowing asynchronous feature modelling in NVIDIA's Hopper and Blackwell, as well as working with dynamic control flow/inputs, and integrates well into the optimization flow
+//     - However, it has a few limitations 1) No guarantees are provided by it---the theorem prover is just another tool for the LLM, so the output cannot be 100% trusted e.g. we rely on the LLM to convert from Gluon to Z3, and this translation itself may be incorrect
+//   - My follow-up work using separation logic on PTX will help address this
+//     - The LLM then just comes-up with pre-/post-conditions and proof invariants etc.
+//     - Much higher confidence in the output as don't rely on translation into a theorem prover language by an LLM---separation logic allows us to just annotate around the PTX, given we have a semantics model
+//     - We also get the benefits of using separation logic over other SMT based approaches e.g. Z3 (need to expand on this)
+//   - Other improvements to the optimization itself too
+//     - Sometimes, we need optimization to tweak parameters like pipeline depth, etc. This is not strictly optimizing writing the kernel, but making decisions on kernel hyperparameters given hardware knowledge
+//     - We can build on work using BO + LLMs to embed LLM hardware knowledge into the search process, and still get confidence + other benefits of BO---this is also much faster to iterate that having the LLM agents manually make these small tweaks to the kernel
+//     - Some other directions to take automated kernel generation in (some research needed)
+// - Second chapter
+//   - Instead of only targeting single kernels/models, can we actually improve the compiler infrastructure itself with LLMs---that way, we can get an entire family of optimized kernels
+//   - Quite limited work in this field
+//   - Refer to paper using alphaevolve, but it is limited in a few ways---I think the LLM only proposes heurisitcs, not optimizations, and also humans pre-choose what heuristics they want to focus on
+//   - This could be automated end-to-end
+//   - More research needed to find limitations to address here too
+// - Third chapter
+//   - Would be cool to do some DSE using some simulators out there e.g. AI GPU cluster networking simulator
+//   - Could even create neural approximations to the simulators
+//   - Want some possible modelling papers to speed-up simulations with neural techniques, or LLM-assisted search
+//   - Look at the literature review to explore ideas
 
 Continued progress in @AI depends on advances in both the software and hardware used to run it. New model architectures, modalities, and training methods can only deliver their full potential when supported by efficient kernels, effective compiler support, and suitable hardware, the development of which remains heavily reliant on specialist expertise. These components lie along a software-hardware spectrum and form the three main areas of this thesis: (1) kernel generation and optimization, (2) compiler development, and (3) hardware design. @fig:spectrum illustrates where this thesis directs its automation efforts within each area, with the long-term goal of enabling automated, end-to-end software–hardware co-design.
 
@@ -454,13 +454,17 @@ As an extension, recent hardware proposals, such as new tensor-core designs @lut
 
 
 == AI-accelerated Performance Modelling
-Detailed simulation remains the standard method to evaluate a hardware design, but it is far too slow to explore large design spaces. This has motivated two largely separate lines of learned performance modelling. The first predicts how a _workload_ performs on a given piece of hardware. SimNet, TAO and NeuroScalar learn instruction latencies directly from execution traces @simnet @tao-sim @neuroscalar. Concorde @concorde combines per-resource analytical throughput bounds, computed from the instruction stream, with a small learned model, and predicts cycles per instruction at a fraction of the cost of simulation. By not directly operating on the instruction stream, it aims to generalize to other hardware more easily than works like TAO. NeuSight @neusight applies similar ideas to forecasting @GPU kernel latency. In all of these models, however, the hardware is described only by a fixed vector of configuration parameters, such as reorder-buffer size or cache capacities. They predict cycles rather than power or area, and they cannot represent a structurally new hardware unit without new training data.
+Detailed simulation remains a standard method for evaluating hardware designs, but its computational cost makes exhaustive exploration of large design spaces impractical. This has motivated two largely separate strands of learned performance modelling. The first predicts how a workload executes on a given hardware design. SimNet, TAO and NeuroScalar learn instruction latencies directly from execution traces @simnet @tao-sim @neuroscalar. Concorde @concorde combines analytical throughput bounds for individual hardware resources, derived from the instruction stream, with a compact learned model to predict cycles per instruction at a fraction of the cost of simulation. By basing its learned component on resource-level bounds rather than raw instruction sequences, Concorde aims to generalize more readily across hardware designs than approaches such as TAO. NeuSight @neusight applies related techniques to predict @GPU kernel latency.
 
-The second line predicts the implementation cost of the _hardware_ itself from its circuit description. CircuitFusion @circuitfusion encodes @RTL designs using three modalities: @HDL, structural graphs, and natural-language functionality summaries. It aligns these with the synthesised netlists, and it outperforms task-specific models at predicting timing slack, power and area. TopoRTL @toportl improves on this by modelling circuit topology directly from the @RTL. NetTAG @nettag extends the approach to gate-level netlists, and DynamicRTL @dynamicrtl learns from simulation traces to capture dynamic circuit behaviour. These models can generalise to circuits they have not seen, but they are workload-agnostic: their power estimates assume generic switching activity, and they say nothing about how quickly a design runs a given program. Analytical toolchains such as Timeloop and Accelergy @timeloop @accelergy do couple workload behaviour with energy and area, but they rely on hand-written component models that must be extended manually for every new type of hardware unit.
+However, these models represent hardware in restricted ways: SimNet, NeuroScalar and TAO typically assume a fixed target architecture or require design-specific learned embeddings, while Concorde and NeuSight describe hardware through configuration parameters or specification features, supplemented by analytical models. Furthermore, they primarily predict execution latency or cycle counts rather than power and area, and extending them to fundamentally new hardware units generally requires additional modelling effort and training data.
 
-My proposed project aims to unify the two lines in a single system that predicts execution time, energy, power and area for any pairing of hardware design and workload within a family of accelerators. The hardware is represented by its configuration together with learned embeddings of each unit's @RTL, and the workload by its instruction stream compiled for that design. The model exploits the physical couplings between the two sides: execution time is the product of cycle count and clock period, and dynamic energy combines each unit's workload-dependent activity with its per-operation energy. Each design variant is synthesised once to obtain its area, clock frequency and per-unit power characteristics. Every pairing of design and workload is then run on the PLENA simulator to obtain the target training data for the machine learning model. 
+The second strand predicts the implementation cost of the *hardware* itself from its circuit description. CircuitFusion @circuitfusion jointly encodes three modalities of @RTL designs: @HDL, structural graphs, and natural-language descriptions of functionality. It aligns these representations with synthesised netlists and outperforms task-specific models in predicting timing slack, power, and area. TopoRTL @toportl builds on this direction by modelling circuit topology directly from @RTL, while NetTAG @nettag extends the approach to gate-level netlists and DynamicRTL @dynamicrtl learns from simulation traces to capture dynamic circuit behaviour.
 
-The central evaluation will hold out unit types and workload pairs during training and measure how accurately the model predicts their effect on metrics such as performance per watt from their @RTL and instruction stream alone. It will compare against running full @RTL and transaction-level simulation. This project has potential to be a significant step in automated software–hardware co-design. @tab:ch3-gap illustrates how this project compares with other performance modelling work.
+Although these models can generalize to previously unseen circuits, they are largely workload-agnostic: their power estimates typically rely on generic assumptions about switching activity, and they do not predict how quickly a design executes a particular program. Analytical toolchains such as Timeloop and Accelergy @timeloop @accelergy bridge part of this gap by connecting workload behaviour to estimates of energy and area. However, they rely on hand-crafted component models that must be extended manually to accommodate new types of hardware units.
+
+My proposed project aims to unify these two strands in a single framework that predicts execution time, energy, power, and area for combinations of hardware designs and workloads within a family of accelerators. The hardware would be represented by its configuration alongside learned embeddings of each unit's @RTL, while the workload would be represented by its instruction stream, compiled for the target design. By modelling both sides, the framework could exploit their physical interactions: execution time depends on the number of cycles and the clock period, while dynamic energy depends on workload-induced activity in each hardware unit and the energy consumed by its operations. Each hardware variant would be synthesized once to estimate its area, clock frequency, and relevant implementation characteristics. Each design–workload pairing would then be simulated via PLENA to generate training data for the learned model.
+
+The central evaluation will hold out hardware-workload pairings during training, assessing how accurately the model predicts their impact on execution time, energy, power, and derived metrics such as performance per watt. The aim is to generalize to unseen combinations using the hardware's @RTL and the workload's compiled instruction stream, rather than relying on a separately developed analytical model for every hardware unit. Prediction accuracy and evaluation cost will be compared against full @RTL and transaction-level simulation. By making performance modelling more adaptable to new hardware structures while accounting for workload-specific behaviour, this project could provide a foundation for more automated and scalable software–hardware co-design. @tab:ch3-gap summarizes how the proposed approach differs from existing performance-modelling methods.
 
 #figure(
   feature-table(
