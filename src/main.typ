@@ -28,6 +28,7 @@
   ("ISA", "Instruction Set Architecture"),
   ("RL", "Reinforcement Learning"),
   ("CPU", "Central Processing Unit"),
+  ("HDL", "Hardware Description Language"),
 )
 
 #let yes = text(fill: rgb("#1a7f37"), sym.checkmark)
@@ -420,7 +421,7 @@ Although Glueball improves both the precision and recall of bug detection, parti
 
 I propose to investigate an alternative approach based on _inequivalence checking_. Rather than relying on an LLM to construct a formal representation of the kernel for verification, the project would use adversarial agents to search for inputs that cause a reference kernel and its optimized counterpart to produce different results. The agents would have access to a broad suite of tools, including theorem provers, fuzzers, debuggers, and static and runtime analyses, allowing them to explore the input space without being restricted to a fixed verification pipeline. Crucially, when a candidate is rejected on the basis of a validated counterexample, the rejection is grounded in a concrete discrepancy between the two kernels.
 
-== Automated Compiler Development for Emerging Hardware
+== Automated Compiler Development for Emerging Hardware <sec:ch2>
 A new accelerator and its hardware features are only useful if software can exploit them effectively. The rapid evolution of machine learning algorithms and hardware accelerators places a substantial burden on compiler engineers, who must ensure that kernels written in high-level languages such as Triton can take full advantage of the underlying hardware. For example, NVIDIA's Hopper architecture introduced asynchronous @TMA transfers, warp-group @MMA instructions, and thread-block clusters. Yet FlashAttention-2 achieved only 35% of the H100's peak throughput, in part because it could not exploit these features; FlashAttention-3 subsequently raised this to 75%, more than two years after Hopper was announced @flashattention-3.
 
 Recent advances in @LLM:pla have enabled kernel generation at multiple levels of the stack, from high-level languages such as Triton @TritonGym @DrKernel, through CUDA @kernelbench @StitchCUDA, to direct generation of @PTX:s and accelerator assembly @ai-as-compiler @KernelCraft. However, generation becomes increasingly challenging at lower levels of abstraction. Low-level code offers fewer safety abstractions and less protection against errors than higher-level programming and compilation pipelines. On unfamiliar accelerator @ISA:pla, for example, hallucinated opcodes are a leading cause of syntax errors @KernelCraft.
@@ -453,6 +454,30 @@ As an extension, recent hardware proposals, such as new tensor-core designs @lut
 
 
 == AI-accelerated Performance Modelling
+Detailed simulation remains the standard method to evaluate a hardware design, but it is far too slow to explore large design spaces. This has motivated two largely separate lines of learned performance modelling. The first predicts how a _workload_ performs on a given piece of hardware. SimNet, TAO and NeuroScalar learn instruction latencies directly from execution traces @simnet @tao-sim @neuroscalar. Concorde @concorde combines per-resource analytical throughput bounds, computed from the instruction stream, with a small learned model, and predicts cycles per instruction at a fraction of the cost of simulation. By not directly operating on the instruction stream, it aims to generalize to other hardware more easily than works like TAO. NeuSight @neusight applies similar ideas to forecasting @GPU kernel latency. In all of these models, however, the hardware is described only by a fixed vector of configuration parameters, such as reorder-buffer size or cache capacities. They predict cycles rather than power or area, and they cannot represent a structurally new hardware unit without new training data.
+
+The second line predicts the implementation cost of the _hardware_ itself from its circuit description. CircuitFusion @circuitfusion encodes @RTL designs using three modalities: @HDL, structural graphs, and natural-language functionality summaries. It aligns these with the synthesised netlists, and it outperforms task-specific models at predicting timing slack, power and area. TopoRTL @toportl improves on this by modelling circuit topology directly from the @RTL. NetTAG @nettag extends the approach to gate-level netlists, and DynamicRTL @dynamicrtl learns from simulation traces to capture dynamic circuit behaviour. These models can generalise to circuits they have not seen, but they are workload-agnostic: their power estimates assume generic switching activity, and they say nothing about how quickly a design runs a given program. Analytical toolchains such as Timeloop and Accelergy @timeloop @accelergy do couple workload behaviour with energy and area, but they rely on hand-written component models that must be extended manually for every new type of hardware unit.
+
+My proposed project aims to unify the two lines in a single system that predicts execution time, energy, power and area for any pairing of hardware design and workload within a family of accelerators. The hardware is represented by its configuration together with learned embeddings of each unit's @RTL, and the workload by its instruction stream compiled for that design. The model exploits the physical couplings between the two sides: execution time is the product of cycle count and clock period, and dynamic energy combines each unit's workload-dependent activity with its per-operation energy. Each design variant is synthesised once to obtain its area, clock frequency and per-unit power characteristics. Every pairing of design and workload is then run on the PLENA simulator to obtain the target training data for the machine learning model. 
+
+The central evaluation will hold out unit types and workload pairs during training and measure how accurately the model predicts their effect on metrics such as performance per watt from their @RTL and instruction stream alone. It will compare against running full @RTL and transaction-level simulation. This project has potential to be a significant step in automated software–hardware co-design. @tab:ch3-gap illustrates how this project compares with other performance modelling work.
+
+#figure(
+  feature-table(
+    ([Workload-aware], [Hardware as circuit (@RTL:s)], [Execution time], [Workload-dependent power], [Area], [Unseen hardware structures], [Learned from data]),
+    (
+      ([Concorde @concorde], true, false, false, false, false, false, true),
+      ([NeuroScalar @neuroscalar], true, false, false, false, false, false, true),
+      ([TAO @tao-sim], true, false, false, false, false, false, true),
+      ([NeuSight @neusight], true, false, true, false, false, false, true),
+      ([Timeloop + Accelergy @timeloop @accelergy], true, false, true, true, true, false, false),
+      ([CircuitFusion @circuitfusion], false, true, false, false, true, true, true),
+      ([TopoRTL @toportl], false, true, false, false, true, true, true),
+    ),
+    [Unified hardware–workload model (this work)],
+  ),
+  caption: [Gap analysis for Chapter 3: features of prior performance and circuit models.],
+) <tab:ch3-gap>
 
 // == Thesis chapters
 // === Integrating theorem proving into kernel optimization workflows
