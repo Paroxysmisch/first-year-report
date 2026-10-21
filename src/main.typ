@@ -117,6 +117,114 @@ This specialization is particularly evident in @ML, where matrix multiplication 
 
 However, specialized hardware also makes the software problem harder. Achieving high performance requires detailed knowledge of the underlying hardware and compiler stack, including memory movement, synchronization, scheduling, and specialized arithmetic units such as Tensor Cores. Moreover, effective optimizations are often tightly intertwined, making the optimization space difficult to navigate @triton-lang. Each new hardware generation introduces new mechanisms, constraints, and architectural characteristics that must be understood and incorporated into the software stack. Compilers themselves must also continually evolve to expose and exploit new hardware capabilities, introducing an additional delay between what the hardware can provide and what software can readily use. 
 
+#figure(
+  {
+    set text(size: 8.5pt)
+    set par(justify: false, leading: 0.5em)
+
+    let c-kern = rgb("#2563eb")
+    let c-comp = rgb("#7c3aed")
+    let c-hw = rgb("#c2410c")
+    let spectrum = gradient.linear(c-kern, c-comp, c-hw)
+    let spectrum-light = gradient.linear(
+      c-kern.lighten(88%), c-comp.lighten(88%), c-hw.lighten(88%),
+    )
+
+    // Horizontal double-headed arrow filled with the spectrum gradient.
+    let head(dir) = polygon(
+      fill: if dir == "left" { c-kern } else { c-hw },
+      ..if dir == "left" { ((0pt, 3.5pt), (7pt, 0pt), (7pt, 7pt)) }
+        else { ((0pt, 0pt), (7pt, 3.5pt), (0pt, 7pt)) },
+    )
+    let axis = grid(
+      columns: (auto, auto, 1fr, auto, auto),
+      align: horizon,
+      column-gutter: 0pt,
+      text(weight: "bold", fill: c-kern)[Software#h(6pt)],
+      head("left"),
+      rect(width: 100%, height: 2.5pt, fill: spectrum, stroke: none),
+      head("right"),
+      text(weight: "bold", fill: c-hw)[#h(6pt)Hardware],
+    )
+
+    // One stage of the spectrum.
+    let stage(col, title, chapter, items, height: auto) = block(
+      width: 100%,
+      height: height,
+      inset: (x: 7pt, y: 7pt),
+      radius: 4pt,
+      fill: col.lighten(90%),
+      stroke: 0.8pt + col,
+      {
+        align(center)[
+          #text(weight: "bold", fill: col.darken(25%), size: 9pt, title) \
+          #text(fill: col.darken(10%), size: 7.5pt, style: "italic", chapter)
+        ]
+        v(2pt)
+        set align(left)
+        set list(marker: text(fill: col)[•], spacing: 0.45em, indent: 0pt, body-indent: 4pt)
+        items
+      },
+    )
+
+    let chevron(col) = text(fill: col, size: 14pt, weight: "bold")[›]
+
+    let stage-specs = (
+      (c-kern, [Algorithms & Kernels], [Chapter 1], [
+        - Optimizing @ML model operations and architectures
+        - Correctness of optimisations
+      ]),
+      (c-comp, [Compiler Infrastructure], [Chapter 2], [
+        - Lowering kernels onto new hardware targets
+        - Exposing new hardware features to software
+      ]),
+      (c-hw, [Hardware Design], [Chapter 3], [
+        - Performance modelling and simulation
+        - @DSE:l
+      ]),
+    )
+
+    // Equal-height stage boxes: measure each at its final width, use the tallest.
+    let chev-w = 10pt
+    let gutter = 3pt
+    let stages = layout(size => {
+      let w = (size.width - 2 * chev-w - 4 * gutter) / 3
+      let h = calc.max(..stage-specs.map(s => measure(block(width: w, stage(..s))).height))
+      let boxes = stage-specs.map(s => stage(..s, height: h))
+      grid(
+        columns: (1fr, chev-w, 1fr, chev-w, 1fr),
+        column-gutter: gutter,
+        align: (x, y) => if calc.odd(x) { horizon + center } else { top },
+        boxes.at(0), chevron(c-comp), boxes.at(1), chevron(c-hw), boxes.at(2),
+      )
+    })
+
+    // Co-design goal spanning the whole spectrum.
+    let goal = block(
+      width: 100%,
+      inset: (x: 8pt, y: 6pt),
+      radius: 4pt,
+      fill: spectrum-light,
+      stroke: (paint: spectrum, thickness: 0.8pt),
+      align(center)[
+        #text(weight: "bold")[Goal:] automated, end-to-end software–hardware co-design
+      ],
+    )
+
+    stack(
+      dir: ttb,
+      spacing: 6pt,
+      axis,
+      stages,
+      goal,
+    )
+  },
+  caption: [The spectrum of software-hardware development considered in this
+    thesis. Each chapter focuses on increasing the level of automation at one stage, working
+    towards automated end-to-end co-design.],
+  placement: top,
+) <fig:spectrum>
+
 This difficulty is compounded by the rapid evolution of @ML workloads. As model architectures, continue to evolve (e.g., @MoE @deepseek-v3), different computation, memory, and communication patterns are introduced, while successive generations of accelerators and supporting infrastructure (e.g., interconnect like NVLink) expose new capabilities and programming constraints. Software must therefore continually adapt to a moving target across both the workloads it executes and the hardware on which it runs.
 
 The resulting complexity affects not only optimization but also verification. For example, modern @GPU programming increasingly relies on asynchronous execution, specialized memory movement, and synchronization mechanisms, creating more opportunities for subtle errors involving data races and ordering. While, formal systems such as GPUVerify have demonstrated the value of automated reasoning about @GPU correctness @gpuverify, recent work continues to show that these problems remain challenging in practice @static-analysis-gpu. Verification must therefore evolve alongside the increasingly sophisticated hardware and software stack.
@@ -143,23 +251,23 @@ For the remainder of my PhD, I aim to increase automation across the software–
 ]
 
 = Literature Review <sec:literature_review>
-- New developments to computer architecture
-  - Discuss in detail improvements made to GPUs and future directions
-  - New floating-point formats
-  - Dedicated hardware for matrix multiplication
-  - Asynchronous execution
-  - Developments to interconnect e.g. NVLink and TPU donuts, and their hardware/software impact
-  - TPUs, and special inference architecture
-- New model architecture developments e.g. developments to MoE, Mamba, Flash Attention and how they aim to maximize the most out of the current hardware
-- Key point is that we are really centering both software and hardware developments around the matrix multiplication primitive
-- Introduce the problem of kernel generation itself---why is it difficult
-- Introduce the verification problem
-- What work has been done around LLMs understanding/working with the compiler stack
-  - LLMs have shown to directly generate assembly
-  - Some work on LLMs understanding intermediate representations
-- What work has been done around LLMs for hardware design
-  - Possibly also try to find some co-design work
-- Use of AI in creating (surrogate) models e.g. for faster DSE, or combating limited data
+// - New developments to computer architecture
+//   - Discuss in detail improvements made to GPUs and future directions
+//   - New floating-point formats
+//   - Dedicated hardware for matrix multiplication
+//   - Asynchronous execution
+//   - Developments to interconnect e.g. NVLink and TPU donuts, and their hardware/software impact
+//   - TPUs, and special inference architecture
+// - New model architecture developments e.g. developments to MoE, Mamba, Flash Attention and how they aim to maximize the most out of the current hardware
+// - Key point is that we are really centering both software and hardware developments around the matrix multiplication primitive
+// - Introduce the problem of kernel generation itself---why is it difficult
+// - Introduce the verification problem
+// - What work has been done around LLMs understanding/working with the compiler stack
+//   - LLMs have shown to directly generate assembly
+//   - Some work on LLMs understanding intermediate representations
+// - What work has been done around LLMs for hardware design
+//   - Possibly also try to find some co-design work
+// - Use of AI in creating (surrogate) models e.g. for faster DSE, or combating limited data
 
 == Model Architecture and Hardware Co-Evolution
 
@@ -285,112 +393,6 @@ Performance prediction has also been integrated into kernel optimization. Mapo @
 
 Continued progress in @AI depends on advances in both the software and hardware used to run it. New model architectures, modalities, and training methods can only deliver their full potential when supported by efficient kernels, effective compiler support, and suitable hardware, the development of which remains heavily reliant on specialist expertise. These components lie along a software-hardware spectrum and form the three main areas of this thesis: (1) kernel generation and optimization, (2) compiler development, and (3) hardware design. @fig:spectrum illustrates where this thesis directs its automation efforts within each area, with the long-term goal of enabling automated, end-to-end software–hardware co-design.
 
-#figure(
-  {
-    set text(size: 8.5pt)
-    set par(justify: false, leading: 0.5em)
-
-    let c-kern = rgb("#2563eb")
-    let c-comp = rgb("#7c3aed")
-    let c-hw = rgb("#c2410c")
-    let spectrum = gradient.linear(c-kern, c-comp, c-hw)
-    let spectrum-light = gradient.linear(
-      c-kern.lighten(88%), c-comp.lighten(88%), c-hw.lighten(88%),
-    )
-
-    // Horizontal double-headed arrow filled with the spectrum gradient.
-    let head(dir) = polygon(
-      fill: if dir == "left" { c-kern } else { c-hw },
-      ..if dir == "left" { ((0pt, 3.5pt), (7pt, 0pt), (7pt, 7pt)) }
-        else { ((0pt, 0pt), (7pt, 3.5pt), (0pt, 7pt)) },
-    )
-    let axis = grid(
-      columns: (auto, auto, 1fr, auto, auto),
-      align: horizon,
-      column-gutter: 0pt,
-      text(weight: "bold", fill: c-kern)[Software#h(6pt)],
-      head("left"),
-      rect(width: 100%, height: 2.5pt, fill: spectrum, stroke: none),
-      head("right"),
-      text(weight: "bold", fill: c-hw)[#h(6pt)Hardware],
-    )
-
-    // One stage of the spectrum.
-    let stage(col, title, chapter, items, height: auto) = block(
-      width: 100%,
-      height: height,
-      inset: (x: 7pt, y: 7pt),
-      radius: 4pt,
-      fill: col.lighten(90%),
-      stroke: 0.8pt + col,
-      {
-        align(center)[
-          #text(weight: "bold", fill: col.darken(25%), size: 9pt, title) \
-          #text(fill: col.darken(10%), size: 7.5pt, style: "italic", chapter)
-        ]
-        v(2pt)
-        set align(left)
-        set list(marker: text(fill: col)[•], spacing: 0.45em, indent: 0pt, body-indent: 4pt)
-        items
-      },
-    )
-
-    let chevron(col) = text(fill: col, size: 14pt, weight: "bold")[›]
-
-    let stage-specs = (
-      (c-kern, [Algorithms & Kernels], [Chapter 1], [
-        - Optimizing @ML model operations and architectures
-        - Correctness of optimisations
-      ]),
-      (c-comp, [Compiler Infrastructure], [Chapter 2], [
-        - Lowering kernels onto new hardware targets
-        - Exposing new hardware features to software
-      ]),
-      (c-hw, [Hardware Design], [Chapter 3], [
-        - Performance modelling and simulation
-        - @DSE:l
-      ]),
-    )
-
-    // Equal-height stage boxes: measure each at its final width, use the tallest.
-    let chev-w = 10pt
-    let gutter = 3pt
-    let stages = layout(size => {
-      let w = (size.width - 2 * chev-w - 4 * gutter) / 3
-      let h = calc.max(..stage-specs.map(s => measure(block(width: w, stage(..s))).height))
-      let boxes = stage-specs.map(s => stage(..s, height: h))
-      grid(
-        columns: (1fr, chev-w, 1fr, chev-w, 1fr),
-        column-gutter: gutter,
-        align: (x, y) => if calc.odd(x) { horizon + center } else { top },
-        boxes.at(0), chevron(c-comp), boxes.at(1), chevron(c-hw), boxes.at(2),
-      )
-    })
-
-    // Co-design goal spanning the whole spectrum.
-    let goal = block(
-      width: 100%,
-      inset: (x: 8pt, y: 6pt),
-      radius: 4pt,
-      fill: spectrum-light,
-      stroke: (paint: spectrum, thickness: 0.8pt),
-      align(center)[
-        #text(weight: "bold")[Goal:] automated, end-to-end software–hardware co-design
-      ],
-    )
-
-    stack(
-      dir: ttb,
-      spacing: 6pt,
-      axis,
-      stages,
-      goal,
-    )
-  },
-  caption: [The spectrum of software-hardware development considered in this
-    thesis. Each chapter focuses on increasing the level of automation at one stage, working
-    towards automated end-to-end co-design.],
-) <fig:spectrum>
 
 == Agentic Kernel Optimization and Verification <sec:ch1>
 
