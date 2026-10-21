@@ -270,7 +270,11 @@ For the remainder of my PhD, I aim to increase automation across the software–
 //   - Possibly also try to find some co-design work
 // - Use of AI in creating (surrogate) models e.g. for faster DSE, or combating limited data
 
+This chapter reviews the work that motivates and informs this thesis, following the software-hardware spectrum of @fig:spectrum. It begins with the interplay between model architectures and the hardware they run on, then surveys recent developments in @AI computer architecture that makes software increasingly difficult to write. The remaining sections cover the three areas where this thesis aims to increase automation: automated kernel optimization and verification, the use of @LLM:pla to develop compilers and related infrastructure, and @AI\-based performance modelling for @DSE.
+
 == Model Architecture and Hardware Co-Evolution
+
+Model architectures and accelerators are not designed in isolation; each increasingly shapes the other. This section first examines how recent model architectures restructure their computation to suit the strengths of current hardware, and then how emerging model architectures are introducing workload characteristics that future hardware may need to support.
 
 === Model Architectures adapting to Current Hardware
 
@@ -312,7 +316,7 @@ Together, these works expose a gap between the rapid generation of optimized ker
 
 == Using LLMs to Improve the Software and Hardware Stack
 
-@LLM:pla offer opportunities to improve @AI systems beyond model development, by automating parts of the software and hardware infrastructure on which those systems run. Recent work examines whether they can understand compiler representations, discover optimization strategies, generate compiler components, and design workload-specific accelerators. This section reviews these directions and the challenges that remain in developing reliable agents for developing the software and hardware stack.
+@LLM:pla offer opportunities to improve @AI systems beyond model development, by automating parts of the software and hardware infrastructure on which those systems run. Recent work examines whether they can understand compiler representations, discover optimization strategies, generate compiler components, and design workload-specific accelerators. This section reviews these directions and the challenges that remain.
 
 === LLMs for Compiler Optimization and Construction
 
