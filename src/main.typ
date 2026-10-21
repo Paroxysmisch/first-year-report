@@ -1,5 +1,9 @@
 #import "/lib.typ": report, callout, directions
 #import "@preview/abbr:0.3.1"
+#import "/figures/glueball.typ": fig-glueball
+#import "/figures/inequivalence.typ": fig-inequivalence
+#import "/figures/compiler.typ": fig-compiler
+#import "/figures/perf-model.typ": fig-perf-model
 
 #abbr.make(
   ("AI", "Artificial Intelligence"),
@@ -426,11 +430,23 @@ Existing work on @GPU kernel verification covers parts of this problem, but none
   placement: top,
 ) <tab:ch1-gap>
 
-In my first year, I worked on Glueball, which integrates formal reasoning tools into an agentic optimization loop for Gluon kernels. Gluon is a tile-level programming language in the Triton ecosystem that exposes low-level hardware features such as @TMA and warp specialization. Glueball uses agents to optimize kernels across an AI model, targeting end-to-end performance while requiring every candidate to pass a correctness pipeline before acceptance. This pipeline symbolically executes supported Triton @IR operations using Z3 and provides agents with a Gluon-to-Z3 library for reasoning about hardware properties, including asynchronous race freedom, barrier ordering, and memory-bank behavior. Agents can use these tools to investigate candidate kernels and generate counterexamples when they identify potential correctness violations.
+In my first year, I worked on Glueball, which integrates formal reasoning tools into an agentic optimization loop for Gluon kernels. Gluon is a tile-level programming language in the Triton ecosystem that exposes low-level hardware features such as @TMA and warp specialization. Glueball uses agents to optimize kernels across an AI model, targeting end-to-end performance while requiring every candidate to pass a correctness pipeline before acceptance. This pipeline symbolically executes supported Triton @IR operations using Z3 and provides agents with a Gluon-to-Z3 library for reasoning about hardware properties, including asynchronous race freedom, barrier ordering, and memory-bank behavior. Agents can use these tools to investigate candidate kernels and generate counterexamples when they identify potential correctness violations. @fig:glueball summarizes this loop: counterexamples from the correctness pipeline and profiling results from benchmarking are both fed back to the optimizer agent to guide its next revision.
+
+#figure(
+  fig-glueball,
+  caption: [Glueball's optimization loop. Starting from a PyTorch model and its reference Triton kernels, agents produce optimized candidate Gluon kernels; each must pass a correctness pipeline combining symbolic execution, LLM reasoning, and a Z3 model of @GPU hardware semantics before being benchmarked end-to-end. Counterexamples and profiling results are fed back to guide the next revision.],
+  placement: top,
+) <fig:glueball>
 
 Although Glueball improves both the precision and recall of bug detection, particularly for kernels that use modern asynchronous hardware features, its approach leaves important questions about trust and soundness. A central challenge in kernel equivalence checking is balancing the complexity of the behavior being modelled against the size of the trusted computing base. Glueball's approach requires trusting not only the Gluon-to-Z3 semantic models, but also the LLM's translation of Gluon programs into Z3 representations. This flexibility enables reasoning about complex hardware behavior, but an inaccurate translation can cause the resulting analysis to diverge from the actual kernel semantics, potentially allowing incorrect kernels to be accepted or causing correct kernels to be rejected.
 
-I propose to investigate an alternative approach based on _inequivalence checking_. Rather than relying on an LLM to construct a formal representation of the kernel for verification, the project would use adversarial agents to search for inputs that cause a reference kernel and its optimized counterpart to produce different results. The agents would have access to a broad suite of tools, including theorem provers, fuzzers, debuggers, and static and runtime analyses, allowing them to explore the input space without being restricted to a fixed verification pipeline. Crucially, when a candidate is rejected on the basis of a validated counterexample, the rejection is grounded in a concrete discrepancy between the two kernels.
+I propose to investigate an alternative approach based on _inequivalence checking_. Rather than relying on an LLM to construct a formal representation of the kernel for verification, the project would use adversarial agents to search for inputs that cause a reference kernel and its optimized counterpart to produce different results. The agents would have access to a broad suite of tools, including theorem provers, fuzzers, debuggers, and static and runtime analyses, allowing them to explore the input space without being restricted to a fixed verification pipeline. Crucially, when a candidate is rejected on the basis of a validated counterexample, the rejection is grounded in a concrete discrepancy between the two kernels. As @fig:inequivalence shows, the agents themselves sit outside the trusted computing base: only the execution of both kernels on real hardware and the comparison of their outputs must be trusted.
+
+#figure(
+  fig-inequivalence,
+  caption: [Proposed inequivalence checking. Agents may use a range of tools to search for a separating input, but are never trusted: a kernel is only rejected on a counterexample whose mismatch has been reproduced by running both kernels on real hardware.],
+  placement: top,
+) <fig:inequivalence>
 
 == Automated Compiler Development for Emerging Hardware <sec:ch2>
 A new accelerator and its hardware features are only useful if software can exploit them effectively. The rapid evolution of machine learning algorithms and hardware accelerators places a substantial burden on compiler engineers, who must ensure that kernels written in high-level languages such as Triton can take full advantage of the underlying hardware. For example, NVIDIA's Hopper architecture introduced asynchronous @TMA transfers, warp-group @MMA instructions, and thread-block clusters. Yet FlashAttention-2 achieved only 35% of the H100's peak throughput, in part because it could not exploit these features; FlashAttention-3 subsequently raised this to 75%, more than two years after Hopper was announced @flashattention-3.
@@ -459,7 +475,13 @@ Beyond these difficulties, direct generation is also an inefficient long-term st
 
 My proposed project therefore asks whether @LLM agents can build optimizing compilers for new accelerators. Automated backend generation has been explored before, but under strong assumptions and still requiring significant manual effort. VEGA @vega fills in function templates mined from existing LLVM backends, but cannot produce code for features with no counterpart in existing backends. Additionally, a significant number of generated templates still need correcting by hand. ACT @act-backend-generation generates provably sound tensor-accelerator backends for XLA @xla , but its guarantees hold only relative to an expert-written formal @ISA description. It cannot discover where that description diverges from the real hardware, and it requires exact semantic equivalence. It also only accepts XLA's tensor @IR, and it optimizes each tile in isolation, relying on XLA's middle-end for most tiling and fusion decisions. Importantly, it relies heavily on analytical cost modelling, which is likely imprecise for any emerging accelerator with novel hardware features.
 
-I aim to built a system where agents develop XLA and Triton backends for PLENA @plena, an accelerator for long-context agentic inference. Agents must build their understanding of the hardware via documentation and conduct their own experiments where hardware semantics details are missing or ambiguous. Targeting both XLA and Triton also provides a natural correctness oracle: JAX @jax programs and Triton kernels compiled by the agent-built backends and executed on the PLENA simulator can be compared against the same programs running on a @CPU, and the inequivalence checking of @sec:ch1 can also be integrated into this work. The evaluation will measure coverage and correctness on held-out programs, performance relative to PLENA's existing hand-written compiler, and total development cost compared with generating each kernel directly.
+I aim to built a system where agents develop XLA and Triton backends for PLENA @plena, an accelerator for long-context agentic inference. Agents must build their understanding of the hardware via documentation and conduct their own experiments where hardware semantics details are missing or ambiguous. Targeting both XLA and Triton also provides a natural correctness oracle: JAX @jax programs and Triton kernels compiled by the agent-built backends and executed on the PLENA simulator can be compared against the same programs running on a @CPU, and the inequivalence checking of @sec:ch1 can also be integrated into this work. The evaluation will measure coverage and correctness on held-out programs, performance relative to PLENA's existing hand-written compiler, and total development cost compared with generating each kernel directly. @fig:compiler outlines the proposed workflow, in which failing programs and counterexamples from this comparison are fed back to the agents as they iteratively extend their backends.
+
+#figure(
+  fig-compiler,
+  caption: [Proposed agent-built compiler workflow. Agents learn details regarding PLENA from its documentation and their own experiments, then build XLA and Triton backends. A suite of development programs is compiled and run on the PLENA simulator and checked against a @CPU reference, with failing programs and counterexamples fed back to the agents. As new hardware features are added to PLENA, the agents adapt the backends to exploit them.],
+  placement: top,
+) <fig:compiler>
 
 As an extension, recent hardware proposals, such as new tensor-core designs @lut-tensor-core, will be integrated into PLENA, and the agents will be tasked with adapting their compilers to exploit them. Measuring how well and how quickly agents can bring software support to new hardware is a concrete step towards automated software–hardware co-design. @tab:ch2-gap illustrates how my proposed project compares to existing work.
 
@@ -486,11 +508,18 @@ The second strand predicts the implementation cost of the hardware itself from i
     [Unified hardware–workload model (this work)],
   ),
   caption: [Gap analysis for Chapter 3: features of prior performance and circuit modelling work.],
+  placement: top,
 ) <tab:ch3-gap>
 
 Although these models can generalize to previously unseen circuits, they are largely workload-agnostic e.g., their power estimates typically rely on generic assumptions about switching activity, and they do not predict how quickly a design executes a particular program. Analytical toolchains such as Timeloop and Accelergy @timeloop @accelergy bridge part of this gap by connecting workload behaviour to estimates of energy and area. However, they rely on hand-crafted component models that must be extended manually to accommodate new types of hardware units.
 
-My proposed project aims to unify these two strands in a single framework that predicts execution time, energy, power, and area for combinations of hardware designs and workloads within a family of accelerators. The hardware would be represented by its configuration alongside learned embeddings of each unit's @RTL, while the workload would be represented by its instruction stream, compiled for the target design. By modelling both sides, the framework could exploit their physical interactions: execution time depends on the number of cycles and the clock period, while dynamic energy depends on workload-induced activity in each hardware unit and the energy consumed by its operations. Each hardware variant would be synthesized once to estimate its area, clock frequency, and relevant implementation characteristics. Each design–workload pairing would then be simulated via PLENA to generate training data for the learned model.
+My proposed project aims to unify these two strands in a single framework that predicts execution time, energy, power, and area for combinations of hardware designs and workloads within a family of accelerators. The hardware would be represented by its configuration alongside learned embeddings of each unit's @RTL, while the workload would be represented by its instruction stream, compiled for the target design. By modelling both sides, the framework could exploit their physical interactions: execution time depends on the number of cycles and the clock period, while dynamic energy depends on workload-induced activity in each hardware unit and the energy consumed by its operations. Each hardware variant would be synthesized once to estimate its area, clock frequency, and relevant implementation characteristics. Each design–workload pairing would then be simulated via PLENA to generate training data for the learned model. @fig:perf-model illustrates the proposed framework, which additionally conditions the model on hardware documentation, such as the semantics of each instruction opcode and natural-language descriptions of each unit.
+
+#figure(
+  fig-perf-model,
+  caption: [Proposed unified performance model. It unifies two currently separate strands of learned performance modelling: _workload-aware_ models, which predict how a program executes on a fixed or parameterised architecture (e.g. Concorde @concorde and NeuSight @neusight), and _circuit_ models, which predict the power and area of hardware from its @RTL independently of any workload (e.g. CircuitFusion @circuitfusion and TopoRTL @toportl). Given a design's @RTL, its documentation and a workload's compiled instruction stream, a single learned model estimates @PPA. Synthesis and PLENA simulation provide the supervision used to train it.],
+  placement: top,
+) <fig:perf-model>
 
 The central evaluation will hold out hardware-workload pairings during training, assessing how accurately the model predicts their impact on execution time, energy, power, and derived metrics such as performance per watt. The aim is to generalize to unseen combinations using the hardware's @RTL and the workload's compiled instruction stream, rather than relying on a separately developed analytical model for every hardware unit. Prediction accuracy and evaluation cost will be compared against full @RTL and transaction-level simulation. By making performance modelling more adaptable to new hardware structures while accounting for workload-specific behaviour, this project could provide a foundation for more automated and scalable software–hardware co-design. @tab:ch3-gap summarizes how the proposed approach differs from existing performance-modelling methods.
 
@@ -506,13 +535,17 @@ The central evaluation will hold out hardware-workload pairings during training,
 
 = Other Activities
 
-*Teaching and outreach.* Last year, I supervised the Advanced Computer Architecture course, and I am planning on supervising it again this year. I am also supervising the Introduction to Computer Architecture course this year and am also a demonstrator for the ECAD laboratory sessions. I also volunteered with the Cambridge outreach programme.
+== Teaching and Outreach
+Last year, I supervised the Advanced Computer Architecture course, and I am planning on supervising it again this year. I am also supervising the Introduction to Computer Architecture course this year and am also a demonstrator for the ECAD laboratory sessions. I also volunteered with the Cambridge outreach programme.
 
-*Summer school.* I attended the ACACES HiPEAC summer school on advancing computer architecture and compilation, with a focus on accelerating @ML workloads.
+== Summer School
+I attended the ACACES HiPEAC summer school on advancing computer architecture and compilation, with a focus on accelerating @ML workloads.
 
-*Industry engagement.* To explore a possible industry collaboration, I travelled to San Francisco to meet the Flapping Airplanes team, which works on developing custom runtimes and kernels to maximize performance on workloads running on the latest NVIDIA @GPU hardware.
+== Industry Engagement
+To explore a possible industry collaboration, I travelled to San Francisco to meet the Flapping Airplanes team, which works on developing custom runtimes and kernels to maximize performance on workloads running on the latest NVIDIA @GPU hardware.
 
-*Publications and collaborations.* My first-year work, Glueball, is currently under review at ICLR 2027. I also collaborated with students from another group on a computational biology paper, which was accepted at the FM4LS ICML 2026 workshop. The paper is titled "ARO: Aligned Representation learning for multi-Omics data" and involves learning meaningful representations from multi-omics cancer data supporting the reconstruction of missing and unpaired modalities via an @ML model.
+== Publications and Collaborations
+My first-year work, Glueball, is currently under review at ICLR 2027. I also collaborated with students from another group on a computational biology paper, which was accepted at the FM4LS ICML 2026 workshop. The paper is titled "ARO: Aligned Representation learning for multi-Omics data" and involves learning meaningful representations from multi-omics cancer data supporting the reconstruction of missing and unpaired modalities via an @ML model.
 
 // - Teaching activities
 //   - Supervised Advanced Computer Architecture last year
