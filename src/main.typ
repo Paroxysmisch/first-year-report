@@ -534,19 +534,28 @@ Early results are encouraging: the proposed variant reduces tail latency
 under partition by roughly 3.5x relative to the baseline, though further
 runs are needed to establish statistical significance.
 
-= Progress Report
-- Teaching activities
-  - Supervised Advanced Computer Architecture last year
-  - Also supervising the course again this year
-  - Demonstrator for ECAD labs this year
-  - Volunteered as part of the Cambridge Outreach program
-- Part of the ACACES summer school
-- Industry
-  - I would like to pursue a collaboration with industry so flew out to San Francisco to meet the Flapping Airplanes team
-- ICLR Conference paper
-  - Glueball paper under review at ICLR 2027
-- Collaboration with other groups
-  - Worked with another student on a computational biology workshop paper that got accepted at ICML 2026
+= Other Activities
+
+*Teaching and outreach.* Last year, I supervised the Advanced Computer Architecture course, and I am planning on supervising it again this year. I am also supervising the Introduction to Computer Architecture course this year and am also a demonstrator for the ECAD laboratory sessions. I also volunteered with the Cambridge outreach programme.
+
+*Summer school.* I attended the ACACES HiPEAC summer school on advancing computer architecture and compilation, with a focus on accelerating @ML workloads.
+
+*Industry engagement.* To explore a possible industry collaboration, I travelled to San Francisco to meet the Flapping Airplanes team, which works on developing custom runtimes and kernels to maximize performance on workloads running on the latest NVIDIA @GPU hardware.
+
+*Publications and collaborations.* My first-year work, Glueball, is currently under review at ICLR 2027. I also collaborated with students from another group on a computational biology paper, which was accepted at the FM4LS ICML 2026 workshop. The paper is titled "ARO: Aligned Representation learning for multi-Omics data" and involves learning meaningful representations from multi-omics cancer data supporting the reconstruction of missing and unpaired modalities via an @ML model.
+
+// - Teaching activities
+//   - Supervised Advanced Computer Architecture last year
+//   - Also supervising the course again this year
+//   - Demonstrator for ECAD labs this year
+//   - Volunteered as part of the Cambridge Outreach program
+// - Part of the ACACES summer school
+// - Industry
+//   - I would like to pursue a collaboration with industry so flew out to San Francisco to meet the Flapping Airplanes team
+// - ICLR Conference paper
+//   - Glueball paper under review at ICLR 2027
+// - Collaboration with other groups
+//   - Worked with another student on a computational biology workshop paper that got accepted at ICML 2026
 
 = Timeline and Future Work <timeline>
 
