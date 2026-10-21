@@ -335,7 +335,20 @@
       // duplicate the one above or trigger our chapter-opening treatment
       // (pagebreak, numbering) while nested inside this container.
       #show heading.where(level: 1): it => it.body
-      #text(size: 10.5pt)[#abbreviations]
+      // Ragged-right, unhyphenated text so long expansions (e.g.
+      // "Application-Specific Integrated Circuit") wrap cleanly instead of
+      // being stretched or split mid-word.
+      #set par(justify: false)
+      #set text(hyphenate: false)
+      // Give every row the height of a two-line entry (plus abbr's 5pt cell
+      // inset top and bottom), so single-line rows are as tall as rows whose
+      // expansion wraps — consistent vertical rhythm down the list.
+      #set text(size: 10.5pt)
+      #context {
+        let two-lines = measure([X \ X]).height + 2 * 5pt
+        set grid(rows: two-lines)
+        abbreviations
+      }
     ]
     v(1.3fr)
   }
