@@ -70,13 +70,13 @@
   logo: "/res/ucam-logo.png",
   logo-width: 4cm,
   date: datetime(year: 2026, month: 10, day: 30),
-  abstract: [
-    This report summarizes progress made during the first year of a PhD
-    investigating how distributed consensus protocols behave under
-    adversarial network partitions. We motivate the problem, review related
-    work, describe preliminary experiments, and outline a plan for the
-    remaining years of the project.
-  ],
+  // abstract: [
+  //   This report summarizes progress made during the first year of a PhD
+  //   investigating how distributed consensus protocols behave under
+  //   adversarial network partitions. We motivate the problem, review related
+  //   work, describe preliminary experiments, and outline a plan for the
+  //   remaining years of the project.
+  // ],
   abbreviations: {
     // `abbr.list()` emits its own heading for a title; push it off to an
     // unused level and out of the outline so it doesn't consume a chapter
@@ -123,19 +123,23 @@ The resulting complexity affects not only optimization but also verification. Fo
 
 Recent advances in artificial intelligence, particularly in large language models, offer an opportunity to address this growing complexity. @LLM:pla can generate and transform code, reason over technical artefacts, interact with external tools, and iteratively refine their outputs. This enables agentic systems that can participate in engineering workflows rather than performing isolated code-generation tasks. Early work has demonstrated this potential for @GPU kernel optimization @kernelbench, algorithmic discovery @alphaevolve, and even hardware design @chipnemo @RTLLM. More broadly, this suggests that @AI systems may be able to assist across the stack, from low-level kernel development to compiler and hardware design.
 
-My work during the first year has explored how @LLM agents can be equipped to optimize and verify @GPU kernels. In Glueball, I developed an agentic optimization workflow for Gluon kernels that combines hardware profiling and benchmarking with formal reasoning, allowing theorem-proving tools to provide correctness feedback during optimization and help improve @LLM:pla' formal reasoning capabilities. The resulting hybrid approach combines symbolic execution, @LLM reasoning, and a high-level @GPU semantics model in Z3 @z3 to check both functional equivalence and program properties such as asynchronous race freedom and barrier ordering, with counterexamples used to diagnose failures and guide subsequent revisions.
+// My work during the first year has explored how @LLM agents can be equipped to optimize and verify @GPU kernels. In Glueball, I developed an agentic optimization workflow for Gluon kernels that combines hardware profiling and benchmarking with formal reasoning, allowing theorem-proving tools to provide correctness feedback during optimization and help improve @LLM:pla' formal reasoning capabilities. The resulting hybrid approach combines symbolic execution, @LLM reasoning, and a high-level @GPU semantics model in Z3 @z3 to check both functional equivalence and program properties such as asynchronous race freedom and barrier ordering, with counterexamples used to diagnose failures and guide subsequent revisions.
+//
+// The remainder of the PhD extends this idea across the hardware/software stack. One direction is to integrate theorem proving directly into kernel optimization workflows, using formal guarantees not only to detect errors but to enable more aggressive automated optimization. A second investigates how agents can participate in the co-development of the software and hardware stack, including their ability to understand and reason about compiler intermediate representations; recent work suggests that precise reasoning about @IR semantics remains a significant limitation of current @LLM:pla @llms-ir-understanding. A third explores @AI\-accelerated modelling for hardware design-space exploration, where the scale of modern architectural design spaces makes intelligent search increasingly attractive @MARL-DSE @chiplet-gym. Together, these directions ask how increasingly capable @AI systems can help us design, optimize, and verify the increasingly specialized computing systems required by @AI itself.
 
-The remainder of the PhD extends this idea across the hardware/software stack. One direction is to integrate theorem proving directly into kernel optimization workflows, using formal guarantees not only to detect errors but to enable more aggressive automated optimization. A second investigates how agents can participate in the co-development of the software and hardware stack, including their ability to understand and reason about compiler intermediate representations; recent work suggests that precise reasoning about @IR semantics remains a significant limitation of current @LLM:pla @llms-ir-understanding. A third explores @AI\-accelerated modelling for hardware design-space exploration, where the scale of modern architectural design spaces makes intelligent search increasingly attractive @MARL-DSE @chiplet-gym. Together, these directions ask how increasingly capable @AI systems can help us design, optimize, and verify the increasingly specialized computing systems required by @AI itself.
+My work during the first year has explored how @LLM agents can be equipped to optimize and verify @GPU kernels. In Glueball, I developed an agentic optimization workflow for Gluon kernels that combines hardware profiling and benchmarking with formal reasoning, so that theorem-proving tools provide correctness feedback during optimization. Glueball combines symbolic execution, @LLM reasoning and a model of @GPU hardware semantics in Z3 @z3. With these, it checks both functional equivalence and program properties such as asynchronous race freedom and barrier ordering, and it uses counterexamples to diagnose failures and guide subsequent revisions. Glueball improved bug detection, particularly for kernels that use asynchronous hardware features. However, its verdicts still depend on trusting an @LLM's translation of each kernel into a formal model, which motivates the first direction of my remaining work in the agentic kernel optimization and verification space.
+
+For the remainder of my PhD, I aim to increase automation across the software–hardware spectrum shown in @fig:spectrum. I propose three directions, each using progressively capable @AI systems to help design, optimize and verify the increasingly specialized computing systems that @AI development depends on:
 
 #directions[
-  *Integrating theorem proving into kernel optimization workflows.*
-  #lorem(50)
+  *Agentic kernel optimization and verification.*
+  New model and hardware architectures demand highly optimized kernels. While @LLM agents can generate these, their output cannot be trusted on random input testing alone. This direction explores how agents can optimize kernels aggressively while establishing their correctness through formal reasoning, adversarial testing and evidence from real hardware.
 ][
-  *Agentic (co-)development of the software and hardware stack.*
-  #lorem(50)
+  *Automated compiler development for emerging hardware.*
+  Rather than producing one kernel at a time, agents could improve the compiler infrastructure that generates entire families of kernels. This direction explores whether agents can build and extend compilers for new accelerators and hardware features, reducing the long duration of expert effort that new hardware currently requires before software can exploit it.
 ][
-  *AI-accelerated modelling for design space exploration.*
-  #lorem(50)
+  *AI-accelerated performance modelling.*
+  Evaluating a hardware design requires slow simulation and synthesis, which limits how widely design spaces can be explored. This direction explores learned models that predict the performance, power and area of hardware designs running realistic workloads, and that adapt to new hardware structures without extensive manual effort.
 ]
 
 = Literature Review <sec:literature_review>
@@ -492,47 +496,6 @@ The central evaluation will hold out hardware-workload pairings during training,
 //   - Inspired from #link("https://raw.githubusercontent.com/mlresearch/v267/main/assets/jiang25p/jiang25p.pdf")[this paper]
 //
 // === AI-accelerated modelling for better design space exploration
-
-= Methodology <sec:methodology>
-
-Our approach combines a formally specified protocol variant with a
-fault-injection test harness.
-
-```python
-def inject_partition(nodes, groups, duration_s):
-    """Split `nodes` into `groups` for `duration_s` seconds."""
-    topology = partition(nodes, groups)
-    schedule(topology, duration_s)
-    return topology
-```
-
-#figure(
-  rect(width: 70%, height: 4cm, fill: rgb("#1B2A4A").lighten(85%), stroke: 1pt + rgb("#1B2A4A")),
-  caption: [Placeholder plot standing in for a real throughput-vs-partition-rate figure.],
-) <fig:placeholder>
-
-As shown in @fig:placeholder, the harness records throughput and latency
-across a sweep of partition rates.
-
-= Preliminary Results <results>
-
-Table 1 summarizes early measurements across three protocol variants.
-
-#figure(
-  table(
-    columns: (auto, auto, auto, auto),
-    align: (left, center, center, center),
-    [*Protocol*], [*Nodes*], [*Partition Rate*], [*p99 Latency*],
-    [Baseline], [5], [0%], [12ms],
-    [Baseline], [5], [20%], [340ms],
-    [Proposed], [5], [20%], [96ms],
-  ),
-  caption: [Preliminary latency comparison across protocol variants.],
-)
-
-Early results are encouraging: the proposed variant reduces tail latency
-under partition by roughly 3.5x relative to the baseline, though further
-runs are needed to establish statistical significance.
 
 = Other Activities
 
