@@ -97,6 +97,8 @@ call-time, nothing is hard-coded elsewhere in `lib.typ`:
 | `abstract` | `none` | Content; adds an Abstract page if given. |
 | `bibliography-file` | `none` | Path to a `.bib` file; adds a References section if given. |
 | `bibliography-style` | `"ieee"` | Any style Typst's `bibliography()` accepts. |
+| `show-word-count` | `false` | Show a word count of the main text (after the contents, before the references) on the cover, via `@preview/wordometer`. |
+| `word-count-exclude` | `(figure,)` | Extra elements to leave out of the word count (functions, names, or labels), e.g. `(figure, raw)`. |
 | `primary-color` | `rgb("#1B2A4A")` (deep navy) | Headings, rules, title text. |
 | `accent-color` | `rgb("#C98A2B")` (warm amber) | Rules, captions, links, page numbers, callouts. |
 | `body-font` | `"New Computer Modern"` | Bundled with Typst — no install needed. |

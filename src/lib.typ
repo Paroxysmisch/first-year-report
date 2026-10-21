@@ -14,6 +14,41 @@
 //   = Introduction
 //   ...
 
+#import "@preview/wordometer:0.1.6": word-count-of
+
+/// Format an integer with thousands separators, e.g. 12345 -> "12,345".
+#let _thousands(n) = {
+  let s = str(n)
+  let out = ""
+  for (i, c) in s.clusters().enumerate() {
+    if i > 0 and calc.rem(s.len() - i, 3) == 0 { out += "," }
+    out += c
+  }
+  out
+}
+
+/// Count `@...` references in `body` that are *not* bibliography citations
+/// (e.g. `@abbr` abbreviations like `@GPU:pla`, or `@fig:x` cross-refs).
+/// wordometer skips every `ref`, so these are added back as one word each.
+/// Elements matched by `exclude` (functions or names) are skipped.
+#let _non-cite-refs(body, cite-keys, exclude) = {
+  if type(body) != content { return 0 }
+  let fn = body.func()
+  if exclude.any(e => e == fn or e == repr(fn)) { return 0 }
+  if fn == ref {
+    return if str(body.target) in cite-keys { 0 } else { 1 }
+  }
+  let n = 0
+  for (name, value) in body.fields() {
+    if name == "children" {
+      for c in value { n += _non-cite-refs(c, cite-keys, exclude) }
+    } else if name in ("body", "child", "text") {
+      n += _non-cite-refs(value, cite-keys, exclude)
+    }
+  }
+  n
+}
+
 /// A tinted, left-bordered admonition box for notes, open questions, or
 /// discussion points to raise with a supervisor.
 #let callout(title: "Note", color: rgb("#C98A2B"), body) = {
@@ -79,6 +114,12 @@
   abbreviations-title: "List of Abbreviations",
   bibliography-file: none,
   bibliography-style: "apa",
+  // --- word count (main text only: after the contents, before references) ---
+  show-word-count: false,
+  // Elements left out of the count, on top of wordometer's defaults (which
+  // already skip citations/references, equations, images, etc.). Accepts
+  // element functions, element names, or labels, e.g. `(figure, raw)`.
+  word-count-exclude: (figure,),
   // --- look and feel (override any of these at use-time) ---
   primary-color: rgb("#1B2A4A"),
   accent-color: rgb("#C98A2B"),
@@ -235,6 +276,20 @@
     text(size: 9pt, tracking: 1.5pt, fill: accent-color)[ADVISOR]
     linebreak()
     text(size: 13pt, style: "italic", fill: rgb("#333333"))[#advisor]
+    v(12pt)
+  }
+  if show-word-count {
+    let exclude = (word-count-exclude,).flatten()
+    let cite-keys = if bibliography-file != none {
+      read(bibliography-file).matches(regex("@\w+\s*\{\s*([^,\s]+)\s*,")).map(m => m.captures.first())
+    } else { () }
+    let words = (
+      word-count-of(doc, exclude: exclude).words
+        + _non-cite-refs(doc, cite-keys, exclude)
+    )
+    text(size: 9pt, tracking: 1.5pt, fill: accent-color)[WORD COUNT]
+    linebreak()
+    text(size: 13pt, style: "italic", fill: rgb("#333333"))[#_thousands(words) words]
   }
   v(1fr)
   grid(

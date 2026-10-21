@@ -85,6 +85,7 @@
     abbr.list(title: [])
   },
   bibliography-file: "/refs.bib",
+  show-word-count: true,
 )
 
 #show: abbr.show-rule
