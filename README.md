@@ -96,7 +96,8 @@ call-time, nothing is hard-coded elsewhere in `lib.typ`:
 | `date` | `datetime.today()` | |
 | `abstract` | `none` | Content; adds an Abstract page if given. |
 | `bibliography-file` | `none` | Path to a `.bib` file; adds a References section if given. |
-| `bibliography-style` | `"ieee"` | Any style Typst's `bibliography()` accepts. |
+| `bibliography-style` | `"apa"` | Any style Typst's `bibliography()` accepts. Only used when `citation-style` is `"long"`. |
+| `citation-style` | `"long"` | `"long"` uses `bibliography-style` (e.g. apa author-year citations); `"short"` ignores it and falls back to Typst's own built-in default citation style (compact numeric, e.g. `[1]`). |
 | `show-word-count` | `false` | Show a word count of the main text (after the contents, before the references) on the cover, via `@preview/wordometer`. |
 | `word-count-exclude` | `(figure,)` | Extra elements to leave out of the word count (functions, names, or labels), e.g. `(figure, raw)`. |
 | `primary-color` | `rgb("#1B2A4A")` (deep navy) | Headings, rules, title text. |

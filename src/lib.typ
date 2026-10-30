@@ -114,6 +114,10 @@
   abbreviations-title: "List of Abbreviations",
   bibliography-file: none,
   bibliography-style: "apa",
+  // "long" uses `bibliography-style` above (e.g. "apa" author-year
+  // citations); "short" ignores it and falls back to Typst's own default
+  // citation style (compact numeric, e.g. "[1]").
+  citation-style: "long",
   // --- word count (main text only: after the contents, before references) ---
   show-word-count: false,
   // Elements left out of the count, on top of wordometer's defaults (which
@@ -428,6 +432,10 @@
   // ---------------------------------------------------------------------
   if bibliography-file != none {
     show bibliography: set text(size: 10pt)
-    bibliography(bibliography-file, style: bibliography-style, title: [References])
+    // `bibliography()` has no "use the built-in default" sentinel to pass
+    // for `style`, so for "short" we omit the argument entirely rather
+    // than guess at what that default's name is.
+    let style-arg = if citation-style == "short" { (:) } else { (style: bibliography-style) }
+    bibliography(bibliography-file, title: [References], ..style-arg)
   }
 }
