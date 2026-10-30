@@ -1,4 +1,4 @@
-#import "/lib.typ": report, callout, directions
+#import "/lib.typ": report, callout, directions, appendix, references
 #import "@preview/abbr:0.3.1"
 #import "/figures/glueball.typ": fig-glueball
 #import "/figures/inequivalence.typ": fig-inequivalence
@@ -104,6 +104,9 @@
   bibliography-file: "/refs.bib",
   show-word-count: true,
   citation-style: "short",
+  // References are placed by hand before the Manuscripts appendix (see
+  // `#references(...)` near the end of this file), not at the very end.
+  auto-bibliography: false,
 )
 
 #show: abbr.show-rule
@@ -254,7 +257,7 @@ Recent advances in artificial intelligence, particularly in large language model
 //
 // The remainder of the PhD extends this idea across the hardware/software stack. One direction is to integrate theorem proving directly into kernel optimization workflows, using formal guarantees not only to detect errors but to enable more aggressive automated optimization. A second investigates how agents can participate in the co-development of the software and hardware stack, including their ability to understand and reason about compiler intermediate representations; recent work suggests that precise reasoning about @IR semantics remains a significant limitation of current @LLM:pla @llms-ir-understanding. A third explores @AI\-accelerated modelling for hardware design-space exploration, where the scale of modern architectural design spaces makes intelligent search increasingly attractive @MARL-DSE @chiplet-gym. Together, these directions ask how increasingly capable @AI systems can help us design, optimize, and verify the increasingly specialized computing systems required by @AI itself.
 
-My work during the first year has explored how @LLM agents can be equipped to optimize and verify @GPU kernels. In Glueball (currently under review at ICLR 2027), I developed an agentic optimization workflow for Gluon kernels that combines hardware profiling and benchmarking with formal reasoning, so that theorem-proving tools provide correctness feedback during optimization. Glueball combines symbolic execution, @LLM reasoning and a model of @GPU hardware semantics in Z3 @z3. With these, it checks both functional equivalence and program properties such as asynchronous race freedom and barrier ordering, and it uses counterexamples to diagnose failures and guide subsequent revisions. Glueball improves bug detection, particularly for kernels that use asynchronous hardware features. However, its verdicts still depend on trusting an @LLM's translation of each kernel into a formal model, which motivates the first direction of my remaining work in the agentic kernel optimization and verification space.
+My work during the first year has explored how @LLM agents can be equipped to optimize and verify @GPU kernels. In Glueball (currently under review at ICLR 2027, with a copy of its manuscript in @app:glueball), I developed an agentic optimization workflow for Gluon kernels that combines hardware profiling and benchmarking with formal reasoning, so that theorem-proving tools provide correctness feedback during optimization. Glueball combines symbolic execution, @LLM reasoning and a model of @GPU hardware semantics in Z3 @z3. With these, it checks both functional equivalence and program properties such as asynchronous race freedom and barrier ordering, and it uses counterexamples to diagnose failures and guide subsequent revisions. Glueball improves bug detection, particularly for kernels that use asynchronous hardware features. However, its verdicts still depend on trusting an @LLM's translation of each kernel into a formal model, which motivates the first direction of my remaining work in the agentic kernel optimization and verification space.
 
 For the remainder of my PhD, I aim to increase automation across the software–hardware spectrum shown in @fig:spectrum. I propose three directions, each using progressively capable @AI systems to help design, optimize and verify the increasingly specialized computing systems that @AI development depends on:
 
@@ -444,7 +447,7 @@ Existing work on @GPU kernel verification partially addresses this problem, but 
   placement: top,
 ) <tab:ch1-gap>
 
-In my first year, I worked on Glueball (currently under review at ICLR 2027), which integrates formal reasoning tools into an agentic optimization loop for Gluon kernels. Gluon is a tile-level programming language in the Triton ecosystem that exposes low-level hardware features such as @TMA and warp specialization. Glueball uses agents to optimize kernels across an @ML model, targeting end-to-end performance while requiring every candidate to pass a correctness pipeline before acceptance. This pipeline symbolically executes supported Triton @IR operations using Z3 and provides agents with a Gluon-to-Z3 library for reasoning about hardware properties, including asynchronous race freedom, barrier ordering, and memory-bank behavior. Agents can use these tools to investigate candidate kernels and generate counterexamples when they identify potential correctness violations. @fig:glueball summarizes this loop: counterexamples from the correctness pipeline and profiling results from benchmarking are both fed back to the optimizer agent to guide its next revision.
+In my first year, I worked on Glueball (currently under review at ICLR 2027, with a copy of its manuscript in @app:glueball), which integrates formal reasoning tools into an agentic optimization loop for Gluon kernels. Gluon is a tile-level programming language in the Triton ecosystem that exposes low-level hardware features such as @TMA and warp specialization. Glueball uses agents to optimize kernels across an @ML model, targeting end-to-end performance while requiring every candidate to pass a correctness pipeline before acceptance. This pipeline symbolically executes supported Triton @IR operations using Z3 and provides agents with a Gluon-to-Z3 library for reasoning about hardware properties, including asynchronous race freedom, barrier ordering, and memory-bank behavior. Agents can use these tools to investigate candidate kernels and generate counterexamples when they identify potential correctness violations. @fig:glueball summarizes this loop: counterexamples from the correctness pipeline and profiling results from benchmarking are both fed back to the optimizer agent to guide its next revision.
 
 Although Glueball improves both the precision and recall of bug detection, particularly for kernels that use modern asynchronous hardware features, its approach leaves important questions about trust and soundness. A central challenge in kernel equivalence checking is balancing the complexity of the behavior being modelled against the size of the trusted computing base. Glueball's approach requires trusting not only the Gluon-to-Z3 semantic models, but also the LLM's translation of Gluon programs into Z3 representations. This flexibility enables reasoning about complex hardware behavior, but an inaccurate translation can cause the resulting analysis to diverge from the actual kernel semantics, potentially allowing incorrect kernels to be accepted or causing correct kernels to be rejected.
 
@@ -609,9 +612,11 @@ My first-year work, Glueball, is currently under review at ICLR 2027. I also col
 === Michaelmas 2028
 - Finish writing and revising; ready for thesis submission.
 
-= Manuscripts
-== Glueball
-Proceed to the next page for the Glueball paper. Note that the complete experiment data and prompts section have been truncated to reduce space.
+#references("/refs.bib", citation-style: "short")
 
-#pagebreak()
+#show: appendix
+
+= Manuscripts
+== Glueball <app:glueball>
+Proceed to the next page for the Glueball paper. Note that the complete experiment data and prompts section have been truncated to reduce space.
 

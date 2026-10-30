@@ -1,7 +1,7 @@
 // first-year-report: a clean, professional Typst template for PhD
 // first-year / annual reports.
 //
-// Usage (see template/main.typ for a full worked example):
+// Usage (see src/main.typ for a full worked example):
 //
 //   #import "@local/first-year-report:0.1.0": report, callout
 //
@@ -92,6 +92,63 @@
   }
 }
 
+/// Switch the remainder of the document into lettered appendices:
+/// level-1 headings become "Appendix A", "Appendix B", ... (styled exactly
+/// like a regular chapter opening) instead of continuing the main
+/// "Chapter N" numbering, and the heading counter restarts from scratch.
+/// Wrap your appendix content with `#show: appendix`, the same way
+/// `#show: report.with(...)` wraps the whole document — everything
+/// *after* the call becomes an appendix; chapters before it are untouched.
+#let appendix(
+  label: "Appendix",
+  primary-color: rgb("#1B2A4A"),
+  heading-font: "New Computer Modern",
+  doc,
+) = {
+  let ink = rgb("#111111")
+  counter(heading).update(0)
+  // `supplement` also drives what `@label` refs print (otherwise Typst's
+  // default is "Section", even for these lettered, chapter-styled
+  // headings) — match it to `label` so e.g. `@app.glueball` reads
+  // "Appendix A.1" rather than "Section A.1".
+  set heading(numbering: "A.1", supplement: [#label])
+  show heading.where(level: 1): it => {
+    pagebreak(weak: true)
+    v(10pt)
+    text(size: 25pt, weight: "regular", style: "italic", fill: ink, font: heading-font)[#it.body]
+    if it.numbering != none {
+      linebreak()
+      smallcaps(text(size: 12.5pt, weight: "regular", style: "italic", fill: primary-color)[
+        #label #counter(heading).display(it.numbering)
+      ])
+    }
+    v(22pt)
+  }
+  doc
+}
+
+/// Render the bibliography with the template's styling. `report()` calls
+/// this automatically at the end of the document when `bibliography-file`
+/// is set — call it yourself instead, wherever you want References to
+/// land (e.g. before an appendix), and pass `auto-bibliography: false` to
+/// `report()` so it isn't rendered twice.
+#let references(
+  bibliography-file,
+  bibliography-style: "apa",
+  // "long" uses `bibliography-style` (e.g. "apa" author-year citations);
+  // "short" ignores it and falls back to Typst's own default citation
+  // style (compact numeric, e.g. "[1]").
+  citation-style: "long",
+  title: [References],
+) = {
+  show bibliography: set text(size: 10pt)
+  // `bibliography()` has no "use the built-in default" sentinel to pass
+  // for `style`, so for "short" we omit the argument entirely rather
+  // than guess at what that default's name is.
+  let style-arg = if citation-style == "short" { (:) } else { (style: bibliography-style) }
+  bibliography(bibliography-file, title: title, ..style-arg)
+}
+
 /// The main template function. Wrap your document body with
 /// `#show: report.with(...)`.
 #let report(
@@ -118,6 +175,10 @@
   // citations); "short" ignores it and falls back to Typst's own default
   // citation style (compact numeric, e.g. "[1]").
   citation-style: "long",
+  // Render References automatically at the very end of the document. Set
+  // to `false` if you call `references()` yourself somewhere else in
+  // `doc` (e.g. before an appendix added via `appendix()`).
+  auto-bibliography: true,
   // --- word count (main text only: after the contents, before references) ---
   show-word-count: false,
   // Elements left out of the count, on top of wordometer's defaults (which
@@ -430,12 +491,11 @@
   // ---------------------------------------------------------------------
   // Bibliography
   // ---------------------------------------------------------------------
-  if bibliography-file != none {
-    show bibliography: set text(size: 10pt)
-    // `bibliography()` has no "use the built-in default" sentinel to pass
-    // for `style`, so for "short" we omit the argument entirely rather
-    // than guess at what that default's name is.
-    let style-arg = if citation-style == "short" { (:) } else { (style: bibliography-style) }
-    bibliography(bibliography-file, title: [References], ..style-arg)
+  if bibliography-file != none and auto-bibliography {
+    references(
+      bibliography-file,
+      bibliography-style: bibliography-style,
+      citation-style: citation-style,
+    )
   }
 }

@@ -1,0 +1,7 @@
+*.pdf
+*.jpg
+.typst-cache/
+inspiration/
+
+# Source material, not build output — exempt from the *.pdf rule above.
+!src/res/glueball-truncated.pdf
